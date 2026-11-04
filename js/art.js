@@ -246,35 +246,54 @@ const ART = (() => {
         <text x="380" y="392" font-family="monospace" font-size="9" fill="#4f8f4f" text-anchor="end">capture 26/10 23:58</text>`);
     },
 
-    /* carte de Lyon stylisée */
-    mapLyon() {
+    /* carte de Lyon : Saône, Rhône, Presqu'île, Croix-Rousse */
+    mapLyon(focus = null) {
       let streets = '';
-      for (let i = 0; i < 16; i++) streets += `<path d="M${-20 + i * 28} 0 L${30 + i * 26} 844" stroke="#2a2a30" stroke-width="${i % 4 === 0 ? 5 : 2}"/>`;
-      for (let i = 0; i < 22; i++) streets += `<path d="M0 ${i * 42} L390 ${i * 42 + 30}" stroke="#2a2a30" stroke-width="${i % 5 === 0 ? 5 : 2}"/>`;
-      const pin = (x, y, c, label, emo) => `<g transform="translate(${x} ${y})"><circle r="16" fill="${c}" stroke="#fff" stroke-width="3"/><text y="6" text-anchor="middle" font-size="15">${emo}</text><text y="34" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="700" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">${label}</text></g>`;
-      return svg(390, 844, `<rect width="390" height="844" fill="#1b1b20"/>${streets}
-        <path d="M60 0 C40 120 120 200 100 330 C80 460 140 560 120 844" stroke="#1f3a5a" stroke-width="38" fill="none"/>
-        <path d="M330 0 C300 160 250 280 260 420 C270 560 220 700 200 844" stroke="#1f3a5a" stroke-width="44" fill="none"/>
-        <path d="M120 440 C170 460 220 470 260 430" stroke="#1f3a5a" stroke-width="18" fill="none" opacity=".0"/>
-        <rect x="140" y="90" width="80" height="50" rx="8" fill="#22362a"/><rect x="290" y="470" width="60" height="90" rx="8" fill="#22362a"/>
-        ${pin(185, 150, '#ff9f0a', 'Domicile', '🏠')}
-        ${pin(170, 360, '#8b7bff', 'Lumen', '💼')}
-        ${pin(300, 330, '#30d158', 'Part-Dieu', '🚆')}
-        ${pin(60, 250, '#8e8e93', 'Loyasse', '🕯️')}
-        ${pin(210, 230, '#ff453a', 'DAB', '💶')}`);
+      const grid = (x0, y0, w, hh, ang, step, col = '#2a2b33') => { let g = ''; for (let i = 0; i <= w; i += step) g += `<path d="M${i} 0 V${hh}" stroke="${col}" stroke-width="${i % (step * 4) === 0 ? 4 : 1.6}"/>`; for (let j = 0; j <= hh; j += step) g += `<path d="M0 ${j} H${w}" stroke="${col}" stroke-width="${j % (step * 4) === 0 ? 4 : 1.6}"/>`; return `<g transform="translate(${x0} ${y0}) rotate(${ang})">${g}</g>`; };
+      streets += grid(-60, -40, 260, 360, 8, 22);   // ouest / Fourvière
+      streets += grid(110, 40, 200, 240, -14, 18);  // Croix-Rousse
+      streets += grid(150, 280, 140, 300, 4, 16);   // Presqu'île
+      streets += grid(250, 120, 220, 520, -4, 20);  // rive gauche / Part-Dieu
+      const pins = {
+        home: [200, 150, '#ff9f0a', 'Domicile', '🏠'], work: [196, 372, '#8b7bff', 'Lumen SAS', '💼'],
+        gare: [335, 318, '#30d158', 'Part-Dieu', '🚆'], loyasse: [62, 236, '#8e8e93', 'Loyasse', '🕯️'],
+        dab: [246, 190, '#ff453a', 'DAB', '💶'],
+      };
+      const pin = k => { const [x, y, c, label, emo] = pins[k]; const f = focus === k;
+        return `<g transform="translate(${x} ${y})">${f ? `<circle r="34" fill="${c}" opacity=".25"><animate attributeName="r" values="18;40;18" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;0;.45" dur="1.8s" repeatCount="indefinite"/></circle>` : ''}
+          <path d="M0 6 C-12 -6 -16 -14 -16 -22 A16 16 0 1 1 16 -22 C16 -14 12 -6 0 6Z" fill="${c}" stroke="#fff" stroke-width="2.5" transform="${f ? 'scale(1.25)' : ''}"/><text y="-17" text-anchor="middle" font-size="14">${emo}</text>
+          <text y="24" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="700" fill="#fff" stroke="#111" stroke-width="3.5" paint-order="stroke">${label}</text></g>`; };
+      const lbl = (x, y, t, sz = 11, col = '#6c6f80', it = false) => `<text x="${x}" y="${y}" font-family="Inter,Arial" font-size="${sz}" font-weight="700" letter-spacing="2" fill="${col}" text-anchor="middle" ${it ? 'font-style="italic" letter-spacing="0"' : ''}>${t}</text>`;
+      return svg(390, 844, `<rect width="390" height="844" fill="#1b1c21"/>${streets}
+        <path d="M-10 120 C30 110 60 140 40 200 C20 260 40 300 90 310 L120 300 L110 0 L-10 0Z" fill="#1e2a22" opacity=".9"/>
+        <ellipse cx="335" cy="150" rx="48" ry="58" fill="#20352a"/><path d="M318 140 q16 -20 30 4 q-10 18 -30 -4z" fill="#1f3a5a"/>
+        <path d="M70 -10 C100 70 80 140 118 200 C150 252 128 330 150 410 C162 460 180 500 200 540 C206 600 200 700 204 860" stroke="#203f63" stroke-width="30" fill="none" stroke-linecap="round"/>
+        <path d="M410 40 C350 120 318 190 296 270 C280 340 262 430 214 530" stroke="#203f63" stroke-width="40" fill="none" stroke-linecap="round"/>
+        <path d="M70 -10 C100 70 80 140 118 200 C150 252 128 330 150 410 C162 460 180 500 200 540 C206 600 200 700 204 860" stroke="#2a5585" stroke-width="2" fill="none" opacity=".6"/>
+        ${[60, 200, 330, 450].map(y => `<path d="M${y < 300 ? 270 : 230} ${y + 40} h${y < 300 ? 70 : 60}" stroke="#3a3b45" stroke-width="5"/>`).join('')}
+        ${lbl(178, 92, 'CROIX-ROUSSE')}${lbl(196, 430, "PRESQU'ÎLE")}${lbl(330, 380, 'PART-DIEU')}${lbl(58, 330, 'FOURVIÈRE')}${lbl(335, 222, "Parc de la Tête d'Or", 10, '#4f7a5f', true)}
+        ${lbl(100, 120, 'Saône', 12, '#4d7fb5', true)}${lbl(338, 92, 'Rhône', 12, '#4d7fb5', true)}
+        ${Object.keys(pins).map(pin).join('')}
+        <g transform="translate(350 470)"><circle r="16" fill="#2c2c2e"/><path d="M0 -10 L5 4 L0 1 L-5 4Z" fill="#ff453a"/><text y="13" font-size="7" fill="#aaa" text-anchor="middle" font-family="Arial">N</text></g>`);
     },
 
-    /* carte de France stylisée avec itinéraire */
-    mapFrance(showRoute = true) {
-      return svg(390, 844, `<rect width="390" height="844" fill="#0f1a26"/>
-        <path d="M70 250 L120 215 L175 200 L215 170 L265 180 L300 215 L330 240 L345 300 L330 350 L345 420 L320 470 L330 520 L290 560 L240 590 L200 600 L150 585 L130 530 L120 480 L100 430 L80 380 L40 340 L10 320 L20 300 L55 300 L60 270 Z" fill="#1f2b38" stroke="#3a4a5a" stroke-width="2"/>
-        ${showRoute ? `<path d="M290 440 C240 400 160 360 22 312" stroke="#0a84ff" stroke-width="5" fill="none" stroke-linecap="round"/>
-        <path d="M22 312 C10 306 0 300 -2 296" stroke="#0a84ff" stroke-width="4" stroke-dasharray="4 8" fill="none" opacity=".8"/>` : ''}
-        <circle cx="290" cy="440" r="8" fill="#30d158" stroke="#fff" stroke-width="2"/><text x="302" y="445" font-family="Inter,Arial" font-weight="700" font-size="13" fill="#fff">Lyon</text>
-        <circle cx="22" cy="312" r="8" fill="#ff453a" stroke="#fff" stroke-width="2"/><text x="30" y="300" font-family="Inter,Arial" font-weight="700" font-size="13" fill="#fff">Brest</text>
-        <text x="8" y="290" font-family="Inter,Arial" font-size="18" fill="#fff" opacity=".9">?</text>
-        <text x="196" y="250" font-family="Inter,Arial" font-size="12" fill="#5a6a7a">Paris</text><circle cx="210" cy="260" r="3" fill="#5a6a7a"/>
-        <text x="96" y="378" font-family="Inter,Arial" font-size="12" fill="#5a6a7a">Nantes</text><circle cx="110" cy="388" r="3" fill="#5a6a7a"/>`);
+    /* carte de France (projection simple lon/lat) avec l'itinéraire de Nora */
+    mapFrance() {
+      const P = ([lo, la]) => [((lo + 5.6) * 0.688 * 38.5 + 14).toFixed(1), ((51.4 - la) * 38.5 + 96).toFixed(1)];
+      const coast = [[2.55,51.09],[1.85,50.95],[1.6,50.73],[1.6,50.2],[1.1,49.95],[0.1,49.5],[-0.3,49.3],[-1.26,49.67],[-1.95,49.72],[-1.6,48.84],[-1.5,48.64],[-2.0,48.65],[-2.75,48.52],[-3.45,48.82],[-3.98,48.72],[-4.6,48.6],[-4.77,48.36],[-4.5,48.25],[-4.73,48.04],[-4.37,47.8],[-3.37,47.7],[-3.12,47.48],[-2.75,47.5],[-2.2,47.27],[-2.25,47.0],[-1.78,46.5],[-1.15,46.15],[-1.05,45.6],[-1.25,45.2],[-1.2,44.65],[-1.4,44.0],[-1.56,43.48],[-1.78,43.37],[-1.4,43.25],[-0.6,42.9],[0.7,42.8],[1.73,42.5],[3.17,42.43],[3.05,42.7],[3.2,43.1],[3.6,43.4],[4.2,43.5],[4.6,43.35],[5.35,43.3],[5.93,43.1],[6.6,43.2],[7.0,43.55],[7.5,43.78],[7.65,44.15],[6.95,44.4],[7.0,45.0],[6.8,45.4],[7.05,45.9],[6.8,46.4],[6.2,46.4],[6.1,46.25],[6.4,46.7],[6.9,47.3],[7.58,47.58],[7.55,48.1],[7.8,48.6],[8.2,48.97],[7.4,49.15],[6.7,49.2],[6.36,49.47],[5.9,49.5],[5.4,49.6],[4.85,50.15],[4.2,49.95],[3.6,50.4],[3.1,50.8]];
+      const pts = coast.map(P).map(p => p.join(',')).join(' ');
+      const city = (lo, la, name, main = false, dx = 8, dy = 4) => { const [x, y] = P([lo, la]); return `<circle cx="${x}" cy="${y}" r="${main ? 6 : 3}" fill="${main ? '#fff' : '#6b7a8c'}" ${main ? 'stroke="#0a84ff" stroke-width="3"' : ''}/><text x="${+x + dx}" y="${+y + dy}" font-family="Inter,Arial" font-size="${main ? 13 : 11}" font-weight="${main ? 700 : 500}" fill="${main ? '#fff' : '#8494a8'}" ${dx < 0 ? 'text-anchor="end"' : ''}>${name}</text>`; };
+      const route = [[4.86,45.76],[4.6,46.6],[3.6,47.6],[2.3,48.72],[0.2,48.2],[-1.68,48.11],[-2.8,48.5],[-4.49,48.39]].map(P);
+      const [bx, by] = P([-4.49, 48.39]), [cx, cy] = P([-4.77, 48.36]), [ox, oy] = P([-5.09, 48.46]);
+      return svg(390, 844, `<rect width="390" height="844" fill="#0e1824"/>
+        ${Array.from({ length: 12 }, (_, i) => `<path d="M0 ${60 + i * 40} H390" stroke="#132030" stroke-width="1"/><path d="M${i * 40} 0 V844" stroke="#132030" stroke-width="1"/>`).join('')}
+        <polygon points="${pts}" fill="#1d2a38" stroke="#3b5068" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M${route.map(p => p.join(' ')).join(' L')}" stroke="#0a84ff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M${bx} ${by} L${cx} ${cy} Q${(+cx + +ox) / 2} ${+oy - 14} ${ox} ${oy}" stroke="#ff9f0a" stroke-width="3" stroke-dasharray="3 6" fill="none" stroke-linecap="round"/>
+        <ellipse cx="${ox}" cy="${oy}" rx="4.5" ry="3" fill="#3b5068"/><text x="${ox}" y="${+oy - 10}" font-family="Inter,Arial" font-size="16" font-weight="800" fill="#ff9f0a" text-anchor="middle">?</text>
+        ${city(2.35, 48.86, 'Paris', false, 6, -6)}${city(-1.55, 47.22, 'Nantes')}${city(-1.68, 48.11, 'Rennes', false, 6, 14)}${city(5.37, 43.3, 'Marseille', false, -6)}${city(-0.58, 44.84, 'Bordeaux')}${city(1.44, 43.6, 'Toulouse')}${city(7.75, 48.58, 'Strasbourg', false, -6)}
+        ${city(4.84, 45.76, 'Lyon', true)}${city(-4.49, 48.39, 'Brest', true, 6, 20)}
+        <text x="195" y="520" font-family="Inter,Arial" font-size="11" fill="#5d6f85" text-anchor="middle" letter-spacing="2">MANCHE · ATLANTIQUE · IROISE</text>`);
     },
 
     mini(kind) { return this[kind](); },

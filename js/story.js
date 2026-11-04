@@ -40,6 +40,7 @@ STORY.clues = {
   L9: { c: 'L', t: "Banque : 400 € retirés en liquide le 30/10. Pour ne pas laisser de trace." },
   L10:{ c: 'L', t: "Mamie : « Personne ne viendra te chercher au bout du monde. »" },
   L11:{ c: 'L', t: "Appel masqué : le vent, la mer, une corne de brume." },
+  L12:{ c: 'L', t: "Santé : le 31/10, 412 pas jusqu'à 5h52, puis plus rien. Le téléphone et la montre sont restés ici." },
   P1: { c: 'P', t: "Note : la liste de tout ce que Lumen sait de Nora." },
   P2: { c: 'P', t: "Bastien Leroy (PDG) l'accuse d'avoir fouillé le module « Partenaires »." },
   P3: { c: 'P', t: "DataNexa achète les trajets de 2 847 113 appareils Lumen." },
@@ -57,11 +58,14 @@ STORY.clues = {
   M5: { c: 'M', t: "Photo supprimée : un homme dans une voiture, en bas de chez elle, le 29/10." },
   M6: { c: 'M', t: "Requête #5102 : Lumen piste ce téléphone en temps réel pour Argos." },
   M7: { c: 'M', t: "Morel sait ce que tu ouvres sur le téléphone. Comment ?" },
+  M8: { c: 'M', t: "Santé : pic cardiaque à 131 bpm le 29/10 à 22:14 — l'heure exacte de la photo de la voiture." },
   D1: { c: 'D', t: "Jade partage sa position en permanence via Lumen." },
   D2: { c: 'D', t: "Nora à Jade : « Ne crois personne qui te dit qu'il veut m'aider. »" },
   D3: { c: 'D', t: "Recherche : « comment savoir si mon téléphone est suivi »." },
   D4: { c: 'D', t: "14 applis connaissent la position de Nora « toujours »." },
   D5: { c: 'D', t: "Requête #5103 : la prochaine cible d'Argos, c'est Jade." },
+  D6: { c: 'D', t: "Santé : Lumen+ lit son sommeil, son rythme cardiaque… et son cycle menstruel." },
+  D7: { c: 'D', t: "Mail : une connexion à sa messagerie, aujourd'hui, depuis ce téléphone. Toi." },
 };
 
 /* ---------------- Messages ---------------- */
@@ -259,6 +263,43 @@ Merci de votre confiance !` },
 ];
 
 (() => { const order = ['flux', 'lumenbilan', 'fwd', 'colix', 'rh', 'bastien', 'datanexa', 'claire', 'mamie']; STORY.mails.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)); })();
+
+/* Mails qui arrivent pendant la partie */
+STORY.lateMails = {
+  secu: { id: 'secu', from: 'Ondes — Sécurité', addr: 'securite@ondes.fr', ini: '🛡', col: '#0a84ff', date: "aujourd'hui", time: '', subj: 'Nouvelle connexion à votre compte', clue: 'D7',
+    body: `Bonjour Nora,
+
+Une connexion à votre messagerie a eu lieu aujourd'hui.
+Appareil : téléphone de Nora · Lyon 4e
+Méthode : réinitialisation par question secrète.
+
+Si c'est bien vous, vous pouvez ignorer ce message.
+Si ce n'est pas vous, quelqu'un connaît désormais votre premier animal de compagnie.
+
+L'équipe Ondes` },
+  nexa: { id: 'nexa', from: 'DataNexa Particuliers', addr: 'offres@datanexa.io', ini: 'DN', col: '#30d158', date: "aujourd'hui", time: '', subj: '✨ Un proche ne donne plus de nouvelles ?',
+    body: `Bonjour,
+
+Nos algorithmes ont détecté une rupture d'habitudes dans votre entourage.
+Un proche ne répond plus ? Retrouvez-le en quelques minutes grâce à notre service « Retrouver ».
+
+✔ Position en temps réel de n'importe quel téléphone équipé d'une application partenaire
+✔ Historique des 90 derniers jours
+✔ Aucune vérification d'identité, pour votre confort
+
+Premier mois offert : <s>49 €</s> 0 €
+
+DataNexa — « La donnée qui vous rapproche »
+<span style="font-size:12px;color:#888">Vous recevez ce message car vos données ont été partagées par l'un de nos partenaires de confiance.</span>` },
+  jadefw: { id: 'jadefw', from: 'Jade Valette', addr: 'jade.vlt@ondes.fr', ini: 'J', col: '#ff9f0a', date: "aujourd'hui", time: '', subj: 'Fwd: ce que j\'ai retrouvé dans mes photos', clue: 'L7',
+    body: `Je fouillais mes vieilles photos pour l'avis de recherche et je suis tombée sur ça.
+Août 2024, la dernière fois qu'on est allées chez mamie toutes les deux. Nora avait écrit derrière :
+
+« Si un jour je disparais, cherche là où la lumière tourne. Je rigole. (Non.) »
+
+Elle était déjà comme ça. Je sais pas si ça aide.
+J.` },
+};
 
 /* ---------------- Notes ---------------- */
 STORY.notes = [
@@ -497,3 +538,114 @@ STORY.endings = {
   claire:{ n: 3, label: 'Fin 3 / 4', title: 'Hors ligne' },
   wipe:  { n: 4, label: 'Fin 4 / 4', title: 'Le silence' },
 };
+
+/* ================= Éléments supprimés & boîtes secondaires ================= */
+Object.assign(STORY.clues, {
+  L13: { c: 'L', t: "Brouillon jamais envoyé à Jade : « là où on passait nos étés, avec mamie »." },
+  M9:  { c: 'M', t: "Mémo supprimé (29/10, 22:16) : « Si quelque chose m'arrive, ce n'est pas un accident. »" },
+  M10: { c: 'M', t: "Messages supprimés : Bastien lui a proposé 50 000 € pour se taire. « Pense à ta sœur. »" },
+  P12: { c: 'P', t: "Mémo supprimé : Nora voulait demander pardon à Léa M. Elle ne l'a jamais envoyé." },
+  P13: { c: 'P', t: "20/10 : Nora a d'abord alerté la cellule éthique de Lumen. Classé sans suite en 48 h." },
+});
+
+STORY.boxMails = [
+  { id: 's_claire', box: 'sent', from: 'À : Claire Asselin', addr: 'c.asselin@lecontrepoint.fr', ini: 'CA', col: '#ff9f0a', date: '24 oct.', time: '23:47', subj: 'Ce que je sais', clue: 'P10',
+    body: `Madame Asselin,
+
+Je m'appelle Nora Valette. Je travaille chez Lumen, l'application « de sécurité » pour les femmes. 2,8 millions d'utilisatrices.
+
+Je peux prouver que nous vendons leurs trajets. À des assureurs, à des recruteurs, à des régies publicitaires. Et, depuis cette année, à des particuliers, sans aucune vérification.
+
+J'ai les contrats. J'ai les tarifs. J'ai une victime : une femme de Villeurbanne, retrouvée et frappée par son ex. Il avait payé 49 € par mois pour savoir où elle était.
+
+J'ai écrit une partie du code qui a rendu ça possible.
+
+Je ne sais pas à qui d'autre écrire.
+Nora` },
+  { id: 's_ethique', box: 'sent', from: 'À : Cellule éthique Lumen', addr: 'ethique@lumen.app', ini: 'É', col: '#8b7bff', date: '20 oct.', time: '09:12', subj: 'Signalement — module Partenaires', clue: 'P13',
+    body: `Bonjour,
+
+Conformément à notre charte (« Votre sécurité avant tout »), je souhaite signaler un usage du module Partenaires qui me semble contraire à nos engagements et probablement à la loi : l'API « Retrouver » permet à n'importe quel particulier d'acheter la position en temps réel d'une utilisatrice, sans vérification.
+
+Je demande la suspension immédiate de cette API et un audit indépendant.
+
+Nora Valette — Data Science` },
+  { id: 'd_jade', box: 'drafts', from: 'À : Jade 💛', addr: 'jade.vlt@ondes.fr', ini: 'J', col: '#ff9f0a', date: '30 oct.', time: '02:31', subj: '(sans objet)', clue: 'L13',
+    body: `Jade,
+
+je ne sais pas comment te dire ça sans te faire peur. Je vais partir quelques jours. Là où on passait nos étés, avec mamie. Tu sais, la maison où le vent
+
+<span style="color:#8e8e93;font-style:italic">[brouillon non envoyé — dernière modification le 30 oct. à 02:31]</span>` },
+  { id: 'd_lea', box: 'drafts', from: 'À : (aucun destinataire)', addr: '', ini: '?', col: '#636366', date: '27 oct.', time: '01:05', subj: 'Pour Léa',
+    body: `Léa,
+
+vous ne me connaissez pas. Moi je sais où vous habitiez, à quelle heure vous partiez travailler, quel chemin vous preniez. Tout le monde pouvait le savoir. Pour 49 €.
+
+Je suis
+
+<span style="color:#8e8e93;font-style:italic">[brouillon non envoyé]</span>` },
+  { id: 't_ethique', box: 'trash', from: 'Cellule éthique Lumen', addr: 'ethique@lumen.app', ini: 'É', col: '#8b7bff', date: '22 oct.', time: '17:58', subj: 'Re: Signalement — module Partenaires', clue: 'P13',
+    body: `Bonjour Nora,
+
+Merci pour votre signalement, qui a été examiné avec la plus grande attention.
+
+Après analyse, la direction confirme que l'ensemble des partenariats est conforme à nos conditions générales d'utilisation, acceptées par chaque utilisatrice.
+
+Ce signalement est donc classé sans suite.
+
+Nous vous rappelons que les informations relatives aux partenariats sont strictement confidentielles.
+
+Bien à vous,
+Bastien Leroy, pour la cellule éthique` },
+  { id: 't_spam', box: 'trash', from: 'Assurvie', addr: 'offres@assurvie.fr', ini: 'A', col: '#64d2ff', date: '19 oct.', time: '08:00', subj: 'Nora, votre nouveau tarif auto est disponible',
+    body: `Bonne nouvelle ! Grâce à l'analyse de vos habitudes de déplacement, votre tarif a été personnalisé.
+
+Trajets nocturnes fréquents : +18 %
+Zone de stationnement « sensible » : +7 %
+
+Nouvelle cotisation : 64,90 €/mois.
+Vous ne savez pas comment nous le savons ? C'est notre métier.` },
+];
+
+STORY.deletedMemos = [
+  { id: 'nuit', title: 'Nouvel enregistrement 14', date: '29 oct. 2026 · 22:16', dur: '0:38', cls: 'red', clue: 'M9', steps: [
+    { sfx: 'wind' }, { fx: '(la pluie contre une fenêtre)' }, { wait: 600 },
+    { who: 'nora', n: 'Nora (chuchote)', t: "Il est encore là. Même voiture, même place, sous le lampadaire. Troisième soir." },
+    { who: 'nora', n: 'Nora (chuchote)', t: "Il ne se cache même pas. Il veut que je le voie." },
+    { breath: true },
+    { who: 'nora', n: 'Nora (chuchote)', t: "Je dis ça pour que ce soit enregistré quelque part. Si quelque chose m'arrive, ce n'est pas un accident." },
+    { fx: '(un moteur démarre dehors)' },
+  ]},
+  { id: 'lea', title: 'Brouillon — pour Léa', date: '27 oct. 2026 · 00:58', dur: '0:24', cls: '', clue: 'P12', steps: [
+    { sfx: 'crackle' }, { wait: 500 },
+    { who: 'nora', n: 'Nora', t: "Léa. Vous ne me connaissez pas. Je travaille pour l'application qui a permis à cet homme de vous retrouver." },
+    { who: 'nora', n: 'Nora', t: "Je voulais vous dire que je suis…" },
+    { wait: 1400 }, { fx: '(un long silence)' },
+    { who: 'nora', n: 'Nora', t: "Non. Ça ne sert à rien de s'excuser. Il faut que ça s'arrête." },
+  ]},
+];
+
+STORY.deletedThreads = {
+  bastiendel: { name: 'NE PAS RÉPONDRE', ini: '⛔', col: '#ff453a', num: '06 39 98 00 66', deleted: true, clue: 'M10', msgs: [
+    { day: 'Mer. 28 oct.' },
+    { f: 'them', t: "Nora. C'est Bastien. Sur mon perso, c'est plus simple." },
+    { f: 'them', t: "Je sais que tu as fait des captures. Je ne t'en veux pas. Tu es idéaliste, c'est pour ça que je t'ai embauchée." },
+    { f: 'them', t: "On peut trouver un arrangement. Une rupture conventionnelle, 50 000 €, une lettre de recommandation. Tu effaces tout, on oublie tout." },
+    { f: 'me', t: "Non." },
+    { f: 'them', t: "Réfléchis. Ce genre d'histoire, ça finit toujours mal pour celui qui parle." },
+    { f: 'them', t: "Pense à ta sœur. Elle partage sa position avec toi, non ? Avec nous, donc." },
+    { f: 'me', t: "C'est une menace ?" },
+    { f: 'them', t: "C'est une information. Tu aimes les informations." },
+  ]},
+};
+
+STORY.lateMails.news = { id: 'news', from: 'Le Contrepoint', addr: 'lettre@lecontrepoint.fr', ini: 'LC', col: '#ff9f0a', date: "aujourd'hui", time: '', subj: 'La lettre du Contrepoint — « Ceux qui nous protègent »',
+  body: `Cette semaine dans Le Contrepoint :
+
+• Applis de sécurité, montres connectées, sonnettes à caméra : qui protègent-elles vraiment ? Notre grande enquête paraît très bientôt.
+• Données de santé : ce que votre téléphone raconte de vos nuits.
+• Témoignage : « Je l'ai quitté. Il savait toujours où j'étais. »
+
+Vous avez une information d'intérêt public ? Notre rédaction protège ses sources.
+
+<span style="font-size:12px;color:#888">Vous êtes abonnée à cette lettre depuis le 24 octobre.</span>` };

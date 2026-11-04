@@ -10,7 +10,7 @@ const fmtNum = s => s.replace(/\D/g, '').replace(/(\d{2})(?=\d)/g, '$1 ').trim()
 APPS.messages = {
   open(el, opts) {
     const nav = new Nav(el);
-    const list = makeView(nav, { title: 'Messages', large: true, right: '<span>✎</span>', body: '<div class="search">🔍 Rechercher</div><div class="tl"></div>' });
+    const list = makeView(nav, { title: 'Messages', large: true, right: '<span>✎</span>', body: '<div class="search">🔍 Rechercher</div><div class="tl"></div><div class="group" style="margin-top:22px"><div class="row deleted-row"><div class="ricon" style="background:#3a3a3c">🗑</div><div class="rmain"><b>Supprimés récemment</b><small>1 conversation · effacée le 30 oct.</small></div><span class="chev"></span></div></div>' });
     nav.push(list);
     const render = () => {
       const tl = $('.tl', list);
@@ -27,11 +27,17 @@ APPS.messages = {
     list.addEventListener('reshow', render);
     live(list, 'msg', render);
     $('.tl', list).onclick = e => { const r = e.target.closest('.th-row'); if (r) { Sound.fx.tap(); this.thread(nav, r.dataset.t); } };
+    $('.deleted-row', list).onclick = () => {
+      Sound.fx.tap();
+      const d = makeView(nav, { title: 'Supprimés récemment', back: 'Messages', body: `<p style="padding:0 16px 10px;color:var(--text2);font-size:13px">Les conversations sont définitivement effacées après 30 jours.</p>${Object.keys(STORY.deletedThreads).map(id => { const T = STORY.deletedThreads[id]; const last = T.msgs[T.msgs.length - 1]; return `<div class="th-row" data-t="${id}">${avatar(T.ini, T.col)}<div class="th-main"><div class="th-top"><b>${esc(T.name)}</b><span>mer. ›</span></div><p>${esc(last.t)}</p></div></div>`; }).join('')}` });
+      nav.push(d);
+      $('.vbody', d).onclick = e => { const r = e.target.closest('.th-row'); if (r) { Sound.fx.tap(); this.thread(nav, r.dataset.t); } };
+    };
     if (opts.thread) this.thread(nav, opts.thread);
     Bus.on('appclose', function f(id) { if (id === 'messages') { Msg.openThread = null; Bus.off('appclose', f); } });
   },
   thread(nav, tid) {
-    const T = STORY.threads[tid];
+    const T = STORY.threads[tid] || STORY.deletedThreads[tid];
     Msg.openThread = tid;
     S.unread[tid] = 0; save(); OS.badges();
     const v = h(`<div class="view"><div class="chat-head"><button class="back">Messages</button>${avatar(T.ini, T.col)}<small>${esc(T.name)} ›</small>${T.num && !T.group && !T.sms ? '<button class="callbtn">📞</button>' : ''}</div>
@@ -77,6 +83,7 @@ APPS.messages = {
     renderComp();
     live(v, 'choices', d => { if (d === tid) renderComp(); });
     if (tid === 'theo') flag('readTheo');
+    if (T.deleted) { comp.onclick = null; comp.innerHTML = '<div class="fake" style="justify-content:center;color:var(--red);border-color:#3a1a1a">Conversation supprimée par Nora le 30 oct.</div>'; flag('readBastienDel'); if (T.clue) setTimeout(() => clue(T.clue), 1200); }
   },
 };
 
@@ -180,7 +187,7 @@ APPS.phone = {
   },
   vm(nav) {
     const list = this.vms();
-    const v = makeView(nav, { title: 'Messagerie', large: true, body: list.length ? `<div class="group">${list.map((m, i) => `<div class="row" data-i="${i}"><div class="rmain"><b style="${m.heard ? '' : 'font-weight:600'}">${m.heard ? '' : '<span style="color:var(--blue)">● </span>'}${esc(m.who)}</b><small>${esc(m.date)}</small></div><span class="rval">▶︎</span></div>`).join('')}</div>` : '<div class="empty">Aucun message</div>' });
+    const v = makeView(nav, { title: 'Messagerie', large: true, body: list.length ? `<div class="group">${list.map((m, i) => `<div class="row" data-i="${i}"><div class="rmain"><b style="${m.heard ? '' : 'font-weight:600'}">${m.heard ? '' : '<span style="color:var(--blue)">● </span>'}${esc(m.who)}</b><small>${esc(m.date)}</small></div><span class="rval" style="font-size:14px;font-feature-settings:'tnum'">${(t => Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'))(Math.round(stepsDuration(m.steps) / 1000))} ▶︎</span></div>`).join('')}</div>` : '<div class="empty">Aucun message</div>' });
     nav.push(v);
     $('.group', v)?.addEventListener('click', e => {
       const r = e.target.closest('.row'); if (!r) return;
@@ -260,7 +267,7 @@ APPS.mail = {
   open(el) {
     const nav = new Nav(el);
     if (!has('mailOpen')) return this.lock(nav);
-    this.inbox(nav);
+    this.boxes(nav); this.inbox(nav);
   },
   lock(nav) {
     const v = makeView(nav, { title: '', noNav: true, body: `<div class="applock"><div class="bigicon">${iconHTML('mail')}</div><h2>Ondes Mail</h2><p>Connectez-vous pour accéder à votre messagerie.</p>
@@ -292,22 +299,39 @@ APPS.mail = {
   ok(nav) {
     Sound.fx.success(); flag('mailOpen'); OS.badges();
     nav.root.innerHTML = ''; nav.stack = [];
-    this.inbox(nav);
+    this.boxes(nav); this.inbox(nav);
+  },
+  boxes(nav) {
+    const cnt = b => STORY.boxMails.filter(m => m.box === b).length;
+    const v = makeView(nav, { title: 'Boîtes', large: true, body: `<div class="group mb">${[['inbox', '📥', 'Réception', ''], ['drafts', '📝', 'Brouillons', cnt('drafts')], ['sent', '📤', 'Envoyés', cnt('sent')], ['trash', '🗑', 'Corbeille', cnt('trash')]].map(([k, i, n, c]) => `<div class="row" data-b="${k}"><div class="ricon" style="background:#0a84ff22;color:var(--blue)">${i}</div><div class="rmain"><b>${n}</b></div><span class="rval mbc" data-c="${k}">${c}</span><span class="chev"></span></div>`).join('')}</div><div class="gfoot" style="margin-top:-12px">nora.valette@ondes.fr</div>` });
+    nav.push(v);
+    const upd = () => { const n = this.all().filter(m => !S.readMail[m.id]).length; $('.mbc[data-c=inbox]', v).textContent = n || ''; };
+    upd(); v.addEventListener('reshow', upd);
+    $('.mb', v).onclick = e => { const r = e.target.closest('.row'); if (!r) return; Sound.fx.tap(); r.dataset.b === 'inbox' ? this.inbox(nav) : this.box(nav, r.dataset.b); };
+  },
+  box(nav, b) {
+    const name = { drafts: 'Brouillons', sent: 'Envoyés', trash: 'Corbeille' }[b];
+    const ms = STORY.boxMails.filter(m => m.box === b);
+    const v = makeView(nav, { title: name, back: 'Boîtes', large: true, body: (b === 'trash' ? '<p style="padding:0 16px 10px;color:var(--text2);font-size:13px">Les messages de la corbeille sont effacés après 30 jours.</p>' : '') + `<div class="ml">${ms.map(m => `<div class="mail-row" data-m="${m.id}"><div class="mu"></div><div class="mm"><div class="mt"><b>${esc(m.from)}</b><span>${esc(m.date)} ›</span></div><div class="ms">${b === 'drafts' ? '<span style="color:var(--red)">Brouillon</span> ' : ''}${esc(m.subj)}</div><p>${esc(m.body.replace(/<[^>]+>/g, ' ').slice(0, 140))}</p></div></div>`).join('')}</div>` });
+    nav.push(v);
+    $('.ml', v).onclick = e => { const r = e.target.closest('.mail-row'); if (r) this.read(nav, r.dataset.m); };
   },
   inbox(nav) {
-    const v = makeView(nav, { title: 'Boîte de réception', large: true, right: '<span>✎</span>', body: `<div class="search">🔍 Rechercher</div><div class="ml"></div>` });
+    const v = makeView(nav, { title: 'Réception', back: 'Boîtes', large: true, right: '<span>✎</span>', body: `<div class="search">🔍 Rechercher</div><div class="ml"></div>` });
     nav.push(v);
     const render = () => {
-      $('.ml', v).innerHTML = STORY.mails.map(m => `<div class="mail-row" data-m="${m.id}"><div class="mu">${S.readMail[m.id] ? '' : '<i></i>'}</div><div class="mm"><div class="mt"><b>${esc(m.from)}</b><span>${esc(m.date)} ›</span></div><div class="ms">${esc(m.subj)}</div><p>${esc(m.body.replace(/<[^>]+>/g, ' ').slice(0, 140))}</p></div></div>`).join('');
+      $('.ml', v).innerHTML = APPS.mail.all().map(m => `<div class="mail-row" data-m="${m.id}"><div class="mu">${S.readMail[m.id] ? '' : '<i></i>'}</div><div class="mm"><div class="mt"><b>${esc(m.from)}</b><span>${esc(m.date)} ›</span></div><div class="ms">${esc(m.subj)}</div><p>${esc(m.body.replace(/<[^>]+>/g, ' ').slice(0, 140))}</p></div></div>`).join('');
     };
     render();
     v.addEventListener('reshow', render);
+    live(v, 'mail', render);
     $('.ml', v).onclick = e => { const r = e.target.closest('.mail-row'); if (r) this.read(nav, r.dataset.m); };
   },
+  all() { return (S.lateMails || []).map(k => STORY.lateMails[k]).concat(STORY.mails); },
   read(nav, id) {
-    const m = STORY.mails.find(x => x.id === id);
+    const m = this.all().concat(STORY.boxMails).find(x => x.id === id);
     S.readMail[id] = 1; save(); OS.badges();
-    const v = makeView(nav, { title: '', back: 'Boîte', right: '<span>⤺</span><span>🗑</span>', body: `<div class="mail-full"><h2>${esc(m.subj)}</h2><div class="from">${avatar(m.ini, m.col)}<div><b>${esc(m.from)}</b><small>${esc(m.addr)}</small><small>À : Nora Valette · ${esc(m.date)} à ${esc(m.time)}</small></div></div><div class="body">${m.body}${m.quote || ''}</div>
+    const v = makeView(nav, { title: '', back: m.box ? { drafts: 'Brouillons', sent: 'Envoyés', trash: 'Corbeille' }[m.box] : 'Réception', right: '<span>⤺</span><span>🗑</span>', body: `<div class="mail-full"><h2>${esc(m.subj)}</h2><div class="from">${avatar(m.ini, m.col)}<div><b>${esc(m.from)}</b><small>${esc(m.addr)}</small><small>${m.box === 'sent' || m.box === 'drafts' ? 'De : Nora Valette' : 'À : Nora Valette'} · ${esc(m.date)}${m.time ? ' à ' + esc(m.time) : ''}</small></div></div><div class="body">${m.body}${m.quote || ''}</div>
       ${m.id === 'datanexa' ? '<div class="attach">📎 releve_T3_datanexa.pdf · 214 Ko</div>' : ''}</div>` });
     nav.push(v);
     if (m.clue) setTimeout(() => clue(m.clue), 900);
@@ -354,21 +378,56 @@ APPS.notes = {
 /* =================== PLANS =================== */
 APPS.maps = {
   open(el) {
-    const v = h(`<div class="view"><div class="map-full">${ART.mapLyon()}</div><div class="map-sheet"><div class="search">🔍 Rechercher dans Plans</div>
-      <div class="ghead">Favoris</div><div class="group"><div class="row" data-k="home"><div class="ricon" style="background:#0a84ff">🏠</div><div class="rmain"><b>Domicile</b><small>Rue d'Austerlitz, Lyon 4e</small></div></div><div class="row" data-k="work"><div class="ricon" style="background:#8b7bff">💼</div><div class="rmain"><b>Travail</b><small>Lumen SAS, Lyon 2e</small></div></div><div class="row" data-k="mamie"><div class="ricon" style="background:#636366">❔</div><div class="rmain"><b style="color:var(--text2)">Lieu supprimé</b><small>Retiré des favoris le 30 oct. à 23:58</small></div></div></div>
-      <div class="ghead">Itinéraires</div><div class="group"><div class="row" data-k="route"><div class="ricon" style="background:#30d158">🚆</div><div class="rmain"><b>Lyon Part-Dieu → Brest</b><small>Prévu sam. 31 oct. · départ 06:34</small></div><span class="chev"></span></div></div>
-      <div class="ghead">Récents</div><div class="group"><div class="row" data-k="r1"><div class="ricon" style="background:#ff453a">💶</div><div class="rmain"><b>DAB — Gros Caillou</b><small>30 oct.</small></div></div><div class="row" data-k="r2"><div class="ricon" style="background:#8e8e93">🕯️</div><div class="rmain"><b>Cimetière de Loyasse</b><small>24 oct.</small></div></div><div class="row" data-k="r3"><div class="ricon" style="background:#ff9f0a">📰</div><div class="rmain"><b>Le Contrepoint — rédaction</b><small>Paris 11e · recherché le 24 oct.</small></div></div></div></div></div>`);
+    const v = h(`<div class="view"><div class="map-full"></div><div class="map-ctrl"><button class="mc-loc" title="Ma position">➤</button><button class="mc-3d">3D</button></div><div class="map-sheet"><button class="grab" aria-label="Agrandir ou réduire"></button><div class="sheet-in"></div></div></div>`);
     el.appendChild(v);
-    $('.map-sheet', v).onclick = e => {
-      const r = e.target.closest('.row'); if (!r) return;
+    const map = $('.map-full', v), sheet = $('.map-sheet', v), inner = $('.sheet-in', v);
+    const setMap = svgStr => { map.style.opacity = 0; setTimeout(() => { map.innerHTML = svgStr; map.style.opacity = 1; }, 160); };
+    const PLACES = {
+      home: ['🏠', '#0a84ff', 'Domicile', "Rue d'Austerlitz, Lyon 4e", "Le téléphone n'a pas bougé d'ici depuis 4 jours."],
+      work: ['💼', '#8b7bff', 'Travail', 'Lumen SAS, Lyon 2e', 'Dernière visite : jeu. 29 oct., 10:41. Accès badge révoqué.'],
+      dab: ['💶', '#ff453a', 'DAB — Gros Caillou', 'Lyon 4e · ven. 30 oct., 13:52', '400 € en liquide. Pour ne laisser aucune trace de paiement.'],
+      loyasse: ['🕯️', '#8e8e93', 'Cimetière de Loyasse', 'Lyon 5e · sam. 24 oct.', "Là où mamie est enterrée. 4 visites en octobre."],
+      gare: ['🚆', '#30d158', 'Gare Part-Dieu', 'Lyon 3e · ven. 30 oct., 15:10', 'Repérage la veille du départ ?'],
+    };
+    const row = (k, ico, col, t, sub, chev = false) => `<div class="row" data-k="${k}"><div class="ricon" style="background:${col}">${ico}</div><div class="rmain"><b>${t}</b><small>${sub}</small></div>${chev ? '<span class="chev"></span>' : ''}</div>`;
+    const list = () => {
+      sheet.classList.remove('route');
+      inner.innerHTML = `<div class="search">🔍 Rechercher dans Plans</div>
+        <div class="ghead">Favoris</div><div class="favs">
+          <button data-k="home"><i style="background:#0a84ff">🏠</i>Domicile</button><button data-k="work"><i style="background:#8b7bff">💼</i>Travail</button><button data-k="deleted"><i style="background:#48484a">❔</i><span style="color:var(--text2)">Supprimé</span></button></div>
+        <div class="ghead">Itinéraire enregistré</div><div class="group">${row('route', '🚆', '#30d158', 'Lyon Part-Dieu → Brest', 'Sam. 31 oct. · départ 06:34 · 6 h 12', true)}</div>
+        <div class="ghead">Récents</div><div class="group">${['dab', 'gare', 'loyasse'].map(k => row(k, PLACES[k][0], PLACES[k][1], PLACES[k][2], PLACES[k][3])).join('')}${row('press', '📰', '#ff9f0a', 'Le Contrepoint — rédaction', 'Paris 11e · recherché le 24 oct.')}</div>
+        <div class="gfoot" style="margin-top:-12px">Historique des lieux : activé. Partagé avec Lumen.</div>`;
+    };
+    const place = k => {
+      const p = PLACES[k];
+      setMap(ART.mapLyon(k));
+      sheet.classList.add('peek');
+      inner.innerHTML = `<div class="place"><div class="pl-top"><div class="ricon" style="background:${p[1]};width:44px;height:44px;border-radius:12px;font-size:22px">${p[0]}</div><div><b>${p[2]}</b><small>${p[3]}</small></div><button class="pl-x">✕</button></div><p>${p[4]}</p></div>`;
+      $('.pl-x', inner).onclick = () => { setMap(ART.mapLyon()); sheet.classList.remove('peek'); list(); };
+    };
+    const route = () => {
+      setMap(ART.mapFrance());
+      sheet.classList.add('route'); sheet.classList.remove('peek');
+      inner.innerHTML = `<div class="place"><div class="pl-top"><div class="ricon" style="background:#30d158;width:44px;height:44px;border-radius:12px;font-size:22px">🚆</div><div><b>Lyon Part-Dieu → Brest</b><small>Sam. 31 oct. · 6 h 12 · 1 correspondance</small></div><button class="pl-x">✕</button></div>
+        <div class="steps"><div><i style="background:#30d158"></i><b>06:34</b> Lyon Part-Dieu</div><div><i></i><b>08:41</b> Massy TGV — correspondance</div><div><i></i><b>10:02</b> Rennes</div><div><i style="background:#ff453a"></i><b>12:46</b> Brest</div>
+        <div class="off"><i style="background:#ff9f0a"></i><b>?</b> L'itinéraire continue vers l'ouest… hors réseau. Aucune destination enregistrée.</div></div></div>`;
+      $('.pl-x', inner).onclick = () => { setMap(ART.mapLyon()); sheet.classList.remove('route'); list(); };
+      clue('L2');
+    };
+    map.innerHTML = ART.mapLyon();
+    list();
+    $('.grab', v).onclick = () => { Sound.fx.tap(); sheet.classList.toggle('peek'); };
+    $('.mc-loc', v).onclick = () => { Sound.fx.tap(); place('home'); };
+    $('.mc-3d', v).onclick = () => { Sound.fx.tap(); map.classList.toggle('tilt'); };
+    inner.onclick = e => {
+      const r = e.target.closest('[data-k]'); if (!r) return;
       Sound.fx.tap();
-      if (r.dataset.k === 'route') {
-        $('.map-full', v).innerHTML = ART.mapFrance();
-        clue('L2');
-        OS.toastInfo('🗺️', 'Lyon → Brest · 6 h 12', "Au-delà de Brest, l'itinéraire se poursuit… hors réseau.");
-      } else if (r.dataset.k === 'mamie') {
-        OS.toastInfo('❔', 'Lieu supprimé', 'Nora a effacé ce favori la veille de son départ.');
-      } else { $('.map-full', v).innerHTML = ART.mapLyon(); }
+      const k = r.dataset.k;
+      if (k === 'route') return route();
+      if (k === 'deleted') { OS.toastInfo('❔', 'Favori supprimé', 'Nora a effacé ce lieu le 30 oct. à 23:58, la veille de son départ.'); return; }
+      if (k === 'press') { OS.toastInfo('📰', 'Le Contrepoint', 'Une rédaction parisienne. Pourquoi Nora cherchait-elle son adresse ?'); clue('P10'); return; }
+      if (PLACES[k]) place(k);
     };
   },
 };
@@ -502,6 +561,7 @@ APPS.memos = {
   open(el) {
     const nav = new Nav(el);
     const v = makeView(nav, { title: 'Dictaphone', large: true, body: `<div class="search">🔍 Rechercher</div><div class="ml">${STORY.memos.map(m => `<div class="memo" data-m="${m.id}"><div><b>${esc(m.title)}</b><small>${esc(m.date)} · ${m.dur}</small></div><div class="play">▶</div></div>`).join('')}</div>
+      <div class="ghead" style="margin-top:26px">🗑 Supprimés récemment</div><div class="ml2">${STORY.deletedMemos.map(m => `<div class="memo" data-m="${m.id}"><div><b style="color:#c8c8cc">${esc(m.title)}</b><small>${esc(m.date)} · ${m.dur} · effacé le 30 oct.</small></div><div class="play" style="color:var(--red)">▶</div></div>`).join('')}</div>
       <div style="display:flex;justify-content:center;padding:40px 0"><div style="width:66px;height:66px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center"><div style="width:52px;height:52px;border-radius:50%;background:var(--red)"></div></div></div>` });
     nav.push(v);
     $('.ml', v).onclick = e => {
@@ -509,6 +569,12 @@ APPS.memos = {
       const m = STORY.memos.find(x => x.id === r.dataset.m);
       if (m.clue) setTimeout(() => clue(m.clue), 4000);
       Overlay.play({ title: m.title, date: m.date, steps: m.steps, cls: m.cls });
+    };
+    $('.ml2', v).onclick = e => {
+      const r = e.target.closest('.memo'); if (!r) return;
+      const m = STORY.deletedMemos.find(x => x.id === r.dataset.m);
+      setTimeout(() => clue(m.clue), 4000); flag('heardDeletedMemo');
+      Overlay.play({ title: m.title + ' (supprimé)', date: m.date, steps: m.steps, cls: m.cls });
     };
   },
 };
@@ -660,7 +726,7 @@ APPS.lumen = {
   },
   proches(b) {
     b.innerHTML = `${this.top()}<div class="lu-hero"><h2>Mes proches</h2><p>Ils voient où vous êtes. Vous voyez où ils sont.</p></div>
-      <div class="lu-card">${STORY.lumen.proches.map(p => `<div class="lu-person"><div class="av" style="background:${p.col}">${p.ini}</div><div><b>${p.name}</b><small>📍 ${esc(p.where)} · ${esc(p.ago)}</small></div>${p.live ? '<span class="live">● EN DIRECT</span>' : ''}</div>`).join('')}</div>
+      <div class="lu-card">${STORY.lumen.proches.map(p => { const gone = p.name === 'Jade' && has('jadeDeletedLumen'); return `<div class="lu-person"><div class="av" style="background:${p.col}">${p.ini}</div><div><b>${p.name}</b><small>${gone ? '⚠️ Application supprimée · signal perdu' : '📍 ' + esc(p.where) + ' · ' + esc(p.ago)}</small></div>${p.live && !gone ? '<span class="live">● EN DIRECT</span>' : ''}</div>`; }).join('')}</div>
       <div class="lu-card" style="font-size:13px;color:#b8b0e8;line-height:1.5">Jade partage sa position avec vous en continu depuis le 3 mars 2025. Merci de prendre soin les uns des autres 💜</div>`;
     clue('D1');
   },
@@ -739,7 +805,7 @@ dernière position : 45.7745, 4.8320 (Lyon 4e)
 client : Argos Conseil
 cible : <b>Jade VALETTE</b> (proche, partage actif)
 type : suivi temps réel
-statut : <span class="warn">EN ATTENTE — déclenchement si contact avec cible #5102</span></div>`; },
+statut : ${has('jadeDeletedLumen') ? '<span class="dim">ÉCHEC — application désinstallée par la cible</span>' : '<span class="warn">EN ATTENTE — déclenchement si contact avec cible #5102</span>'}</div>`; },
       log: () => {
         const lines = [`[${nowHM()}:02] NV-01 : déverrouillage (code)`, `[${nowHM()}:04] NV-01 : ouverture app Lumen`, `[${nowHM()}:05] NV-01 : <span class="crit">accès mode dev</span>`, `[${nowHM()}:05] → transfert journal vers argos-conseil.fr … OK`, `[${nowHM()}:06] NV-01 : lecture onglet « requêtes »`, `[${nowHM()}:06] → transfert journal vers argos-conseil.fr … OK`];
         let i = 0; clearInterval(logTimer);
@@ -902,6 +968,57 @@ APPS.carnet = {
   },
 };
 
+
+/* =================== SANTÉ =================== */
+APPS.health = {
+  open(el) {
+    const nav = new Nav(el);
+    const days = ['28', '29', '30', '31', '1', '2', '3'];
+    const steps = [9120, 4380, 11240, 412, 0, 0, 0];
+    const sleepH = [5.2, 2.9, 3.4, 0, 0, 0, 0];
+    const bars = (vals, max, col, hl) => `<svg viewBox="0 0 300 92">${vals.map((v, i) => { const hh = v ? Math.max(3, v / max * 66) : 2; return `<rect x="${8 + i * 42}" y="${70 - hh}" width="26" height="${hh}" rx="4" fill="${i === hl ? col : v ? col : '#3a3a3c'}" opacity="${i === hl || !v ? 1 : .45}"/><text x="${21 + i * 42}" y="86" font-size="10" fill="#8e8e93" text-anchor="middle" font-family="Inter,Arial">${days[i]}</text>`; }).join('')}</svg>`;
+    const v = makeView(nav, { title: 'Résumé', large: true, cls: 'health', body: `
+      <div class="ghead">Montre de Nora</div>
+      <div class="hcard" style="cursor:default"><div class="hh">⌚ Connectée en Bluetooth <span>batterie 0 %</span></div><div class="hnote">À proximité de ce téléphone depuis le 31 oct., 05:58. Elle ne l'a pas emportée.</div></div>
+      <div class="ghead">Épinglés</div>
+      <div class="hcard" data-k="steps"><div class="hh"><span style="color:#ff9f0a;font-weight:600">🔥 Pas</span><span>sam. 31 oct.</span></div><div class="hv">412<small>pas</small></div><div class="hnote">Dernière activité à 05:52. Puis plus aucun pas enregistré.</div>${bars(steps, 12000, '#ff9f0a', 3)}</div>
+      <div class="hcard" data-k="heart"><div class="hh"><span style="color:#ff2d55;font-weight:600">❤️ Rythme cardiaque</span><span>jeu. 29 oct. ›</span></div><div class="hv">131<small>BPM · max</small></div><div class="hnote">Pic inhabituel au repos. Touchez pour voir le détail.</div></div>
+      <div class="hcard" data-k="sleep"><div class="hh"><span style="color:#5ac8fa;font-weight:600">🛏 Sommeil</span><span>moyenne 3 h 50</span></div><div class="hv">2 h 54<small>nuit du 29 au 30</small></div>${bars(sleepH, 8, '#5ac8fa', 1)}</div>
+      <div class="hcard" data-k="cycle"><div class="hh"><span style="color:#ff6b9a;font-weight:600">🌸 Suivi du cycle</span><span>J18</span></div><div class="hnote">Prochaines règles estimées : 13 nov.</div></div>
+      <div class="ghead">Partage</div>
+      <div class="hshare"><div class="row" data-k="share"><div class="ricon" style="background:#8b7bff">◉</div><div class="rmain"><b>Lumen+</b><small>Accès : sommeil, rythme cardiaque, cycle, activité</small></div><span class="chev"></span></div>
+      <div class="row" data-k="share2"><div class="ricon" style="background:#ff6b9a">≋</div><div class="rmain"><b>Flux</b><small>Accès : activité, pas</small></div><span class="chev"></span></div></div>
+      <div class="gfoot" style="margin-top:-2px">Vos données de santé sont chiffrées sur l'appareil. Les apps que vous autorisez en reçoivent une copie.</div>` });
+    nav.push(v);
+    setTimeout(() => clue('L12'), 1500);
+    $('.vbody', v).onclick = e => {
+      const c = e.target.closest('[data-k]'); if (!c) return;
+      Sound.fx.tap();
+      const k = c.dataset.k;
+      if (k === 'heart') {
+        const pts = [62, 60, 64, 61, 66, 63, 62, 70, 88, 131, 118, 104, 96, 90, 84, 79, 76, 74];
+        const path = pts.map((p, i) => `${i ? 'L' : 'M'}${10 + i * 16.5} ${120 - (p - 50) * 0.95}`).join(' ');
+        nav.push(makeView(nav, { title: 'Rythme cardiaque', back: 'Résumé', cls: 'health', body: `<div class="hcard" style="cursor:default"><div class="hh"><span>jeu. 29 oct. · 20:00 – 23:59</span></div><div class="hv">131<small>BPM à 22:14</small></div>
+          <svg viewBox="0 0 300 140">${[60, 90, 120].map(y => `<path d="M0 ${y} H300" stroke="#2c2c2e"/>`).join('')}<path d="${path}" stroke="#ff2d55" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="${10 + 9 * 16.5}" cy="${120 - 81 * 0.95}" r="5" fill="#ff2d55" stroke="#fff" stroke-width="2"/>
+          <text x="${10 + 9 * 16.5 + 9}" y="${120 - 81 * 0.95 + 4}" font-size="11" fill="#fff" font-family="Inter,Arial">22:14</text><text x="4" y="136" font-size="10" fill="#8e8e93" font-family="Inter,Arial">20:00</text><text x="296" y="136" font-size="10" fill="#8e8e93" text-anchor="end" font-family="Inter,Arial">00:00</text></svg>
+          <div class="hnote">Fréquence au repos : 62 BPM. Aucune activité physique détectée pendant le pic. La montre a noté : « Rythme élevé — êtes-vous stressée ? »</div></div>
+          <div class="gfoot" style="margin-top:0">22:14. La même minute que la photo supprimée de la voiture en bas de chez elle.</div>` }));
+        setTimeout(() => clue('M8'), 1100);
+        return;
+      }
+      if (k === 'share' || k === 'cycle') {
+        nav.push(makeView(nav, { title: 'Lumen+', back: 'Résumé', cls: 'health', body: `<div class="group">${[['Sommeil', 'Lecture'], ['Rythme cardiaque', 'Lecture'], ['Cycle menstruel', 'Lecture'], ['Activité et pas', 'Lecture'], ['Position des entraînements', 'Lecture']].map(([a, b]) => `<div class="row"><div class="rmain"><b>${a}</b></div><span class="rval">${b} ✓</span></div>`).join('')}</div>
+          <div class="gfoot" style="margin-top:-14px">Autorisé le 3 juillet 2023 (« Améliorer la détection des situations à risque »). Dernier accès : aujourd'hui, ${nowHM()}.<br><br>Pourquoi une appli qui vous raccompagne chez vous a-t-elle besoin de connaître votre cycle ?</div>` }));
+        setTimeout(() => clue('D6'), 1100);
+        return;
+      }
+      if (k === 'share2') { OS.toastInfo('≋', 'Flux', "« Nous utilisons votre activité pour vous proposer des contenus adaptés à votre énergie du jour. »"); return; }
+      if (k === 'steps') { OS.toastInfo('🔥', 'Sam. 31 oct.', '05:31 réveil · 05:40 palier (3e étage) · 05:52 cuisine · puis 0 pas.'); return; }
+      if (k === 'sleep') { OS.toastInfo('🛏', 'Sommeil fragmenté', "Réveillée 7 fois dans la nuit du 29 au 30. Dernier réveil : 03:12, l'heure de l'appel masqué."); }
+    };
+  },
+};
+
 /* ---------------- Aide progressive ---------------- */
 const Hints = {
   steps() {
@@ -937,7 +1054,7 @@ const Hints = {
       ]],
       [true, [
         "Tu en sais assez. Où est-elle ? Pourquoi ? Qui la cherche ? Appuie sur « Conclure l'enquête ».",
-        "Pour gratter plus d'indices : appelle les numéros que tu croises, regarde les photos supprimées, les réseaux Wi-Fi, la météo…",
+        "Pour gratter plus d'indices : appelle les numéros que tu croises (la voisine, « NE PAS RÉPONDRE », le fixe de mamie…), fouille tout ce qui a été supprimé (photos, messages, mémos vocaux, brouillons et corbeille du Mail), le Wi-Fi, la météo, l'appli Santé…",
       ]],
     ];
   },

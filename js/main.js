@@ -8,9 +8,17 @@ const CHOICES = {
     { label: "Je m'y mets. On va la retrouver.", then() { Msg.receive('jade', ["Merci. Vraiment.", "Je reste à côté de mon téléphone."]); } },
     { label: "Tu es sûre qu'elle veut qu'on la retrouve ?", then() { Msg.receive('jade', ["…", "Je sais pas. Mais moi j'ai besoin de savoir qu'elle va bien."]); } },
   ],
+  jadeCheck: [
+    { label: "Oui. Un « inspecteur Morel », de la police judiciaire.", then() { flag('toldJadeMorel'); Msg.receive('jade', ["Un inspecteur ??", "Les flics m'ont dit hier qu'ils ne cherchaient PAS Nora. Qu'elle était majeure.", "Attends. J'appelle le commissariat."]); } },
+    { label: "Non, personne.", then() { flag('lieJade'); Msg.receive('jade', ["Ok…", "Moi j'ai rappelé la police ce matin. Toujours la même réponse : « majeure et libre ». Ils ne font rien."]); } },
+  ],
   jadePolice: [
-    { label: "Un certain « inspecteur Morel » m'a appelé·e.", then() { Msg.receive('jade', ["QUOI ?", "Qui c'est ce type ??", "Rappelle-le, ou cherche son nom dans ses mails. Et ne lui dis RIEN."]); } },
-    { label: "D'accord. Je ferai attention.", then() { Msg.receive('jade', ["Merci. Je deviens folle.", "Si quelqu'un se présente comme flic… méfie-toi."]); } },
+    { label: "Alors qui c'est ?", then() { Msg.receive('jade', ["J'en sais rien. Mais il ment.", "Cherche son nom dans ses mails. Rappelle son numéro. Et ne lui dis RIEN."]); } },
+    { label: "D'accord. Je ne lui dirai rien.", then() { Msg.receive('jade', ["Merci. Je deviens folle."]); } },
+  ],
+  jadeLumen: [
+    { label: "Supprime-le. Tout de suite. Je t'expliquerai.", then() { flag('jadeDeletedLumen'); Msg.receive('jade', ["…ok. C'est fait.", "Tu me fais peur, là."]); } },
+    { label: "Je ne sais pas encore. Garde-le pour l'instant.", then() { Msg.receive('jade', ["Ok. Mais dis-moi vite."]); } },
   ],
   morel1: [
     { label: "Je n'ai encore rien trouvé.", then() { Msg.receive('morel', ["Cherchez mieux. Le temps joue contre elle."]); } },
@@ -26,13 +34,24 @@ const CHOICES = {
 const VOICEMAILS = {
   vm_maman2: { who: 'Maman', date: "aujourd'hui", steps: [{ who: 'maman', n: 'Maman', t: "C'est encore maman. Je sais que ce n'est pas toi qui as le téléphone, Jade m'a dit. Mais j'avais besoin d'entendre ta messagerie. Ta voix. Pardon." }] },
   vm_morel: { who: '+33 6 39 98 71 44', date: "aujourd'hui", clue: 'M1', steps: [{ who: 'morel', n: 'Inspecteur Morel', t: "Bonjour. Inspecteur Franck Morel, police judiciaire. Je sais que vous avez le téléphone de Nora Valette. Elle est peut-être en danger. Rappelez-moi, ou écrivez-moi à ce numéro. Le moindre lieu. Personne d'autre." }] },
+  vm_bastien: { who: 'NE PAS RÉPONDRE', date: "aujourd'hui", clue: 'M4', steps: [{ who: 'bastien', n: 'Bastien Leroy', t: "C'est Bastien Leroy. Je sais que ce n'est pas Nora qui a ce téléphone. Il contient des données qui appartiennent à Lumen. Remettez-le à monsieur Morel. Il saura vous trouver, de toute façon." }] },
   vm_masked: { who: 'Numéro masqué', date: "aujourd'hui", clue: 'L11', steps: [{ sfx: 'sea' }, { wait: 1500 }, { fx: "(personne ne parle)" }, { gull: true }, { wait: 1500 }, { foghorn: true }, { wait: 2000 }, { breath: true }, { fx: "(fin du message)" }] },
 };
+function addMail(id) {
+  S.lateMails = S.lateMails || [];
+  if (S.lateMails.includes(id)) return;
+  S.lateMails.unshift(id); save();
+  const m = STORY.lateMails[id]; m.time = nowHM();
+  Bus.emit('mail'); OS.badges();
+  OS.notify({ app: 'mail', title: m.from, body: m.subj, onTap: () => OS.open('mail') });
+}
 function addVoicemail(id) { if (!S.voicemails.some(v => v.id === id)) { S.voicemails.unshift({ id, heard: false }); save(); OS.badges(); OS.notify({ app: 'phone', title: 'Nouveau message vocal', body: VOICEMAILS[id].who, onTap: () => OS.open('phone', null, { tab: 'vm' }) }); } }
 
 /* ---------------- numéros appelables ---------------- */
 const robot = t => ({ who: 'robot', n: 'Messagerie', t });
 const beep = { fn: () => Sound.fx.beep() };
+// fin de messagerie façon iPhone : bip, enregistrement court (durée fixe), puis raccroché automatique
+const vmEnd = (sec = 4) => [beep, { rec: sec }, { wait: 500 }];
 const CALLS = {
   resolve(raw) {
     const n = raw.replace(/\D/g, '').replace(/^33/, '0');
@@ -42,13 +61,13 @@ const CALLS = {
     if (is('0639984450')) return { rings: 1, steps: [{ who: 'maman', n: 'Maman', t: "Allô ? Nora ? … Ah. C'est toi. Jade m'a dit." }, { who: 'maman', n: 'Maman', t: "Tu as trouvé quelque chose ? … Non ? … Elle parlait tellement de sa grand-mère, ces derniers temps. De sa maison, là-bas, au bout du monde." }, { who: 'maman', n: 'Maman', t: "Appelle-moi dès que tu sais. Je ne dors plus." }] };
     if (is('0639982788')) return this.theo();
     if (is('0261914806')) return this.mamie();
-    if (is(STORY.morelNum)) return { rings: 2, steps: [{ who: 'argos', n: 'Répondeur', t: "Vous êtes bien chez Argos Conseil. Investigations privées, recherche de personnes, intelligence économique." }, { who: 'argos', n: 'Répondeur', t: "Laissez-nous un message, nous vous rappellerons." }, { fn: () => clue('M3') }, beep, { wait: 1500 }] };
-    if (is(STORY.claireNum)) return { rings: 3, steps: [{ who: 'claire', n: 'Claire Asselin', t: "Claire Asselin, Le Contrepoint. Laissez-moi un message." }, { who: 'claire', n: 'Claire Asselin', t: "Si vous êtes une source : pas ici. Vous savez où me trouver." }, beep, { wait: 1200 }, { fn: () => clue('P10') }] };
+    if (is(STORY.morelNum)) return { rings: 2, steps: [{ who: 'argos', n: 'Répondeur', t: "Vous êtes bien chez Argos Conseil. Investigations privées, recherche de personnes, intelligence économique." }, { who: 'argos', n: 'Répondeur', t: "Laissez-nous un message, nous vous rappellerons." }, { fn: () => clue('M3') }, ...vmEnd()] };
+    if (is(STORY.claireNum)) return { rings: 3, steps: [{ who: 'claire', n: 'Claire Asselin', t: "Claire Asselin, Le Contrepoint. Laissez-moi un message." }, { who: 'claire', n: 'Claire Asselin', t: "Si vous êtes une source : pas ici. Vous savez où me trouver." }, { fn: () => clue('P10') }, ...vmEnd()] };
     if (is('0465712020')) return { rings: 1, steps: [{ sfx: 'hold' }, robot("Bienvenue chez Lumen. Ne rentrez plus jamais seule."), robot("Votre sécurité est notre priorité. Temps d'attente estimé : quarante-sept minutes."), { wait: 3500 }, robot("Pour signaler un problème de confidentialité, merci de consulter l'article dix-sept point quatre de nos conditions d'utilisation."), { wait: 2500 }, robot("Au revoir."), { stopsfx: 'hold' }] };
     if (is('0639986117')) return this.benali();
     if (is('0639980066')) return this.bastien();
-    if (is('0639983340')) return { rings: 3, steps: [{ who: 'jade', n: 'Inès (messagerie)', t: "C'est Inès ! Laisse un message, ou mieux, envoie un mème." }, beep] };
-    if (is('0639985219')) return { rings: 3, steps: [{ who: 'homme', n: 'Paul (messagerie)', t: "Paul. Bip. Voilà." }, beep] };
+    if (is('0639983340')) return { rings: 3, steps: [{ who: 'jade', n: 'Inès (messagerie)', t: "C'est Inès ! Laisse un message, ou mieux, envoie un mème." }, ...vmEnd()] };
+    if (is('0639985219')) return { rings: 3, steps: [{ who: 'homme', n: 'Paul (messagerie)', t: "Paul. Bip. Voilà." }, ...vmEnd()] };
     if (is('0465718802')) return { rings: 2, steps: [robot("Le cabinet du docteur Pelletier est fermé. En cas d'urgence, composez le 15.")] };
     if (is('0639989027')) return { rings: 0, steps: [robot("Vous appelez le numéro de ce téléphone. Ligne occupée.")] };
     return { rings: 1, steps: [robot("Le numéro que vous avez demandé n'est pas attribué. Veuillez vérifier votre saisie.")] };
@@ -72,7 +91,7 @@ const CALLS = {
         { fx: '(il raccroche)' },
       ] };
     }
-    return { rings: 4, steps: [{ who: 'theo', n: 'Théo (messagerie)', t: "Théo. Laissez un message." }, beep] };
+    return { rings: 4, steps: [{ who: 'theo', n: 'Théo (messagerie)', t: "Théo. Laissez un message." }, ...vmEnd()] };
   },
   mamie() {
     S.calledMamie = (S.calledMamie || 0) + 1; save();
@@ -92,7 +111,7 @@ const CALLS = {
     ] };
   },
   bastien() {
-    if (has('bastienTalked')) return { rings: 5, steps: [{ who: 'bastien', n: 'Messagerie', t: "Bastien Leroy. Laissez un message." }, beep] };
+    if (has('bastienTalked')) return { rings: 5, steps: [{ who: 'bastien', n: 'Messagerie', t: "Bastien Leroy. Laissez un message." }, ...vmEnd()] };
     flag('bastienTalked');
     return { rings: 2, steps: [
       { who: 'bastien', n: '« NE PAS RÉPONDRE »', t: "Nora ? … Nora, c'est toi ?" },
@@ -138,7 +157,9 @@ const EVENTS = [
   } },
   { id: 'morelSms', after: 'ev_morelCall', delay: 8, run() { Msg.receive('morel', ["Inspecteur Morel. Voici mon numéro.", "Le moindre lieu, écrivez-le-moi. Le temps joue contre elle."]).then(() => Msg.setChoices('morel', 'morel1')); } },
   { id: 'lumenPing2', after: 'ev_morelCall', delay: 45, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "📍 Votre position a été partagée avec 1 partenaire de confiance." }); } },
-  { id: 'jadePolice', after: 'ev_morelCall', delay: 75, run() { Msg.receive('jade', ["Je viens d'appeler le commissariat pour savoir s'il y avait du nouveau.", "AUCUNE enquête n'est ouverte. Et ils n'ont pas d'inspecteur Morel. Personne de ce nom.", "Si quelqu'un te contacte en disant qu'il est flic… méfie-toi."]).then(() => { clue('M2'); Msg.setChoices('jade', 'jadePolice'); }); } },
+  { id: 'jadeCheck', after: 'ev_morelCall', delay: 60, run() { Msg.receive('jade', ["Du nouveau de ton côté ?", "Quelqu'un t'a contacté·e sur son téléphone ?"]).then(() => Msg.setChoices('jade', 'jadeCheck')); } },
+  { id: 'jadeCheck2', after: 'lieJade', delay: 120, run() { Msg.receive('jade', ["Maman vient de m'appeler.", "Un homme l'a appelée chez elle. Il s'est présenté comme policier et voulait savoir si Nora avait « une maison de famille ».", "T'es sûr·e que personne ne t'a appelé·e ?"]).then(() => Msg.setChoices('jade', 'jadeCheck')); } },
+  { id: 'jadePolice', after: 'toldJadeMorel', delay: 25, run() { Msg.receive('jade', ["J'ai appelé le commissariat.", "AUCUNE enquête n'est ouverte. Et il n'y a pas d'inspecteur Morel. Personne de ce nom.", "Ce type n'est pas flic."]).then(() => { clue('M2'); Msg.setChoices('jade', 'jadePolice'); }); } },
   { id: 'theoWarn', after: 'lumenDev', delay: 18, run() { Msg.receive('theo', ["C'est toi qui as le tel de Nora ? Jade m'a dit.", "Je viens de recevoir une alerte : quelqu'un s'est connecté au mode dev depuis son appareil.", "Si tu as vu la 5102, tu sais qu'ils suivent ce téléphone. En ce moment.", "Et la 5103… c'est Jade. Elle a Lumen. Elle partage sa position. Tu comprends ?", "Je peux rien faire de plus. Ils lisent mes messages pro. Efface cette conversation."]); } },
   { id: 'morelKnows', after: 'vaultOpen', delay: 12, run() { Sound.fx.glitch(); $('#screen').classList.add('glitch'); setTimeout(() => $('#screen').classList.remove('glitch'), 1100); ensureThread('morel'); Msg.receive('morel', ["Vous venez d'ouvrir un dossier chiffré.", "Ces fichiers sont des pièces sensibles. Ne les transférez à personne."]).then(() => clue('M7')); } },
   { id: 'lumenPing3', after: 'vaultOpen', delay: 70, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "💜 Nora, vous semblez stressée. Découvrez Lumen Sérénité, notre programme premium." }); } },
@@ -149,6 +170,28 @@ const EVENTS = [
   } },
   { id: 'morelThreat', after: 'ombreOpen', delay: 55, cond: () => has('ev_morelCall'), run() { Msg.receive('morel', ["Je sais que vous êtes proche.", "Le téléphone que vous tenez se trouve rue d'Austerlitz, Lyon 4e. Je pourrais passer le chercher.", "Ou vous pouvez simplement me donner le lieu."]).then(() => Msg.setChoices('morel', 'morel2')); } },
   { id: 'jadeFinal', after: 'ombreOpen', delay: 95, run() { Msg.receive('jade', ["Théo m'a appelée. Il dit que tu as trouvé des trucs. Il avait une voix bizarre.", "Quand tu es prêt·e, ouvre ton carnet. Et dis-moi tout.", "Je dois savoir."]); } },
+  { id: 'mailSecu', after: 'mailOpen', delay: 70, run() { addMail('secu'); } },
+  { id: 'fluxStalk', after: 'readArgos', delay: 25, run() { OS.notify({ app: 'flux', title: 'Flux', body: "bastien.leroy a consulté votre profil 6 fois aujourd'hui.", onTap: () => OS.open('flux') }); } },
+  { id: 'nexaPromo', after: 'readDatanexa', delay: 60, run() { addMail('nexa'); } },
+  { id: 'jadeLumen', after: 'noteOpen', delay: 30, run() { Msg.receive('jade', ["Je relis tous ses messages et je pense à un truc.", "Elle m'a demandé la semaine dernière si j'avais encore Lumen sur mon téléphone. Pourquoi elle m'aurait demandé ça ?", "Je l'ai toujours. Je partage ma position avec elle et maman."]).then(() => Msg.setChoices('jade', 'jadeLumen')); } },
+  { id: 'calRemind', after: 'unlocked', delay: 330, run() { OS.notify({ app: 'calendar', title: 'Calendrier', body: "Rappel : 🎂 Anniversaire Jade dans 8 jours — NE PAS RATER", onTap: () => OS.open('calendar') }); } },
+  { id: 'bankIdle', after: 'unlocked', delay: 260, run() { OS.notify({ app: 'bank', title: 'Banque Azur', body: "Votre carte n'a pas été utilisée depuis 4 jours. Pour votre sécurité, nous surveillons votre compte. 💚" }); } },
+  { id: 'adHike', after: 'bankOpen', delay: 20, run() { OS.notify({ app: 'flux', title: 'Flux · Sponsorisé', body: "📍 Vous étiez près de Décathlon récemment. -20 % sur la randonnée côtière ! 🌊" }); } },
+  { id: 'lumenAlert', after: 'lumenDev', delay: 50, run() { Sound.fx.glitch(); OS.notify({ app: 'lumen', title: 'Lumen — Sécurité', body: "⚠️ Activité inhabituelle détectée sur votre compte. Un conseiller va vous contacter.", sound: null }); } },
+  { id: 'meteoAlert', after: 'vaultOpen', delay: 35, run() { OS.notify({ app: 'weather', title: 'Météo · Ouessant', body: "Vigilance orange vent. Traversées vers les îles du Ponant annulées demain matin.", onTap: () => OS.open('weather') }); } },
+  { id: 'photoMemory', after: 'ev_masked', delay: 30, run() { OS.notify({ app: 'photos', title: 'Photos', body: "Nouveau souvenir : « Mamie » — 1 photo, 1 lieu.", onTap: () => OS.open('photos', null, { photo: 'ouessant' }) }); } },
+  { id: 'jadeMail', after: 'lumenOpen', delay: 140, run() { addMail('jadefw'); } },
+  { id: 'healthNudge', after: 'unlocked', delay: 400, run() { OS.notify({ app: 'health', title: 'Santé', body: "Vous n'avez fait aucun pas depuis 4 jours. Bougez un peu ! 🚶‍♀️", onTap: () => OS.open('health') }); } },
+  { id: 'bastienCall', after: 'readBastienDel', delay: 22, call: true, cond: () => !has('bastienTalked'), run() {
+    const c = CALLS.bastien();
+    Call.incoming({ name: 'NE PAS RÉPONDRE', ini: '⛔', col: '#ff453a', script: c.steps, onMiss: () => setTimeout(() => addVoicemail('vm_bastien'), 3500) });
+  } },
+  { id: 'quichesWorry', after: 'unlocked', delay: 230, run() { Msg.receive('quiches', ["Jade dit que quelqu'un a le téléphone de Nora ??", "si tu lis ça, qui que tu sois : dis-lui qu'on l'aime. et qu'on lui garde une patate 🥔"], { notifyTitle: 'Les Quiches 🥧 · Inès' }); } },
+  { id: 'jadeStory', after: 'unlocked', delay: 290, run() { OS.notify({ app: 'flux', title: 'Flux', body: "jade.vlt a publié une story : « AVIS DE RECHERCHE — Nora, 27 ans. Partagez 🙏 »", onTap: () => OS.open('flux') }); } },
+  { id: 'contrepointNews', after: 'mailOpen', delay: 160, run() { addMail('news'); } },
+  { id: 'adminCode', after: 'lumenDev', delay: 85, run() { Msg.receive('lumensms', ["LUMEN : Votre code de connexion administrateur est 771204. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message."], { notifyTitle: 'LUMEN' }); } },
+  { id: 'lumenNight', after: 'heardDeletedMemo', delay: 30, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "💜 Vous utilisez votre téléphone tard le soir. Lumen Sérénité vous aide à mieux dormir. Essai gratuit !" }); } },
+  { id: 'morelDeleted', after: 'readBastienDel', delay: 75, cond: () => has('ev_morelCall'), run() { ensureThread('morel'); Msg.receive('morel', ["Je vois que vous lisez des conversations supprimées.", "Certaines choses sont effacées pour de bonnes raisons."]); } },
   { id: 'battery', after: 'unlocked', delay: 480, run() { OS.notify({ app: 'settings', title: 'Batterie faible', body: `${S.battery} % de batterie restante. Le téléphone de Nora n'a pas été chargé depuis 4 jours.` }); } },
 ];
 function tick() {
@@ -171,7 +214,11 @@ const Main = {
     if (S.threadOrder) { S.threadOrder.forEach(ensureThread); STORY.threadOrder = S.threadOrder.filter((x, i, a) => a.indexOf(x) === i); }
     Object.keys(S.msgs).forEach(ensureThread);
     Sound.setMuted(!!S.muted);
+    document.body.insertAdjacentHTML('beforeend', '<div id="saProbe" style="position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden"></div><div id="rotate">📱↻<br><span>Tourne ton téléphone à la verticale</span></div>');
     this.fit(); window.addEventListener('resize', () => this.fit());
+    if (window.visualViewport) visualViewport.addEventListener('resize', () => this.fit());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.fit(), 250));
+    document.addEventListener('gesturestart', e => e.preventDefault());
     OS.init();
     this.syncMute();
     $('#sideMute').onclick = () => { const m = !Sound.muted; Sound.setMuted(m); S.muted = m; save(); this.syncMute(); };
@@ -186,9 +233,35 @@ const Main = {
   },
   syncMute() { $('#sideMute').textContent = Sound.muted ? '🔇 Son coupé' : '🔊 Son activé'; },
   fit() {
-    const mob = innerWidth <= 560 || (innerWidth < innerHeight && innerWidth <= 820 && 'ontouchstart' in window);
+    const touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const vw = window.visualViewport ? visualViewport.width : innerWidth;
+    let vh = window.visualViewport ? visualViewport.height : innerHeight;
+    const mob = vw <= 560 || (touch && vw < vh && vw <= 820);
+    const land = touch && vw > vh && vh < 520;
     document.body.classList.toggle('mobile', mob);
-    if (mob) return;
+    document.body.classList.toggle('landscape', land);
+    const ph = $('#phone'), wrap = $('#phoneWrap');
+    if (mob) {
+      // Le clavier virtuel réduit la hauteur visible : on garde la mise en page d'avant.
+      const typing = document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+      if (typing && this._mobH) vh = this._mobVH;
+      this._mobVH = vh;
+      const s = vw / 390;
+      const H = Math.round(vh / s);
+      this._mobH = H;
+      ph.style.width = '390px'; ph.style.height = H + 'px';
+      ph.style.transform = `scale(${s})`;
+      wrap.style.width = vw + 'px'; wrap.style.height = vh + 'px';
+      document.body.classList.toggle('short', H < 790);
+      document.body.classList.toggle('vshort', H < 720);
+      // Encoche réelle (iPhone) : la vraie barre d'état remplace la nôtre.
+      const probe = $('#saProbe');
+      const top = probe ? probe.getBoundingClientRect().height : 0;
+      document.body.classList.toggle('notch', top > 20);
+      return;
+    }
+    ph.style.width = ''; ph.style.height = '';
+    document.body.classList.remove('short', 'vshort', 'notch');
     const sideW = innerWidth > 960 ? 300 : 0;
     $('#side').style.display = sideW ? '' : 'none';
     const s = Math.min((innerHeight - 32) / 868, (innerWidth - sideW - 32) / 414, 1.15);
@@ -306,6 +379,7 @@ const Main = {
         paper: { mast: 'Le Contrepoint', sec: 'Révélations', h: "Lumen : l'appli qui promettait de nous protéger vendait nos trajets", chap: "Le douzième jour, l'enquête de Claire Asselin paraît. Nora avait gardé ses propres copies. Elle n'avait pas besoin de toi pour ça.", p: ["La CNIL a ouvert une procédure. L'entreprise est placée sous enquête."] },
         last: "Nora est rentrée. Jade l'a serrée si fort qu'elle a eu mal. Puis elle a demandé : « Pourquoi personne ne m'a rien dit ? » Le silence protège. Il blesse aussi." },
     }[k];
+    if (k === 'jade' && has('jadeDeletedLumen')) T_.txt[2] = "Elle avait supprimé Lumen, comme tu le lui avais dit. Mais ton message est parti de CE téléphone. Celui qu'Argos lit en direct, journal compris.";
     const d = i => `animation-delay:${fromResume ? 0 : i}s`;
     let t = 0.4;
     const html = `<div class="end-wrap">

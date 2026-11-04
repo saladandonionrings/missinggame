@@ -224,26 +224,33 @@ const Voice = (() => {
     const re = g === 'm' ? MALE : FEMALE;
     return voices.find(v => re.test(v.name)) || voices[0];
   }
-  function estimate(text, rate = 1) { return Math.max(1200, (text.length * 62) / rate + 500); }
+  // Durée « officielle » d'une réplique : elle ne dépend que de la longueur du texte.
+  // La voix est coupée si elle dépasse, pour que messages et appels gardent un tempo fixe.
+  function estimate(text, rate = 1) { return Math.round(Math.max(1400, (text.length * 68) / rate + 650)); }
+  let keep = null;
   function say(text, who = 'robot', token) {
     return new Promise(res => {
       const p = PROFILES[who] || PROFILES.robot;
-      const est = estimate(text, p.rate);
-      let done = false;
-      const fin = () => { if (!done) { done = true; clearInterval(chk); res(); } };
-      const chk = setInterval(() => { if (token && token.cancel) { try { synth.cancel(); } catch (e) {} fin(); } }, 100);
-      if (!synth || Sound.muted || !voices.length) { setTimeout(fin, est); return; }
+      const dur = estimate(text, p.rate);
+      let done = false, speaking = false;
+      const fin = () => { if (done) return; done = true; clearInterval(chk); clearTimeout(cap); if (speaking) { try { synth.cancel(); } catch (e) {} } res(); };
+      const chk = setInterval(() => { if (token && token.cancel) fin(); }, 100);
+      const cap = setTimeout(fin, dur + 400);
+      if (!synth || Sound.muted || !voices.length) return;
       try {
+        synth.cancel();
         const u = new SpeechSynthesisUtterance(text);
+        keep = u; // évite que Chrome libère l'objet avant la fin (onend jamais appelé)
         u.lang = 'fr-FR';
         const v = pick(p.g); if (v) u.voice = v;
         u.pitch = p.pitch; u.rate = p.rate; u.volume = 1;
-        u.onend = fin; u.onerror = fin;
-        setTimeout(fin, est * 2.2 + 2500);
+        u.onstart = () => { speaking = true; };
+        u.onend = () => { speaking = false; };
+        u.onerror = () => { speaking = false; };
         synth.speak(u);
-      } catch (e) { setTimeout(fin, est); }
+      } catch (e) {}
     });
   }
   function stop() { try { synth && synth.cancel(); } catch (e) {} }
-  return { say, stop, estimate, get available() { return voices.length > 0; } };
+  return { say, stop, estimate, PROFILES, get available() { return voices.length > 0; } };
 })();

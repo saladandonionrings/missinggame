@@ -49,6 +49,7 @@ const ICONS = {
   bank: { bg: 'linear-gradient(160deg,#14a080,#07463a)', svg: `<svg viewBox="0 0 60 60"><text x="30" y="40" font-family="Inter,Arial" font-weight="800" font-size="28" fill="#fff" text-anchor="middle">€</text><path d="M14 46 H46" stroke="#7fffd8" stroke-width="2.5"/></svg>` },
   ombre: { bg: '#000', svg: `<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="15" fill="#e8e8e8"/><path d="M30 15 A15 15 0 0 0 30 45Z" fill="#000"/><circle cx="30" cy="30" r="15" fill="none" stroke="#555" stroke-width="1"/></svg>` },
   carnet: { bg: 'linear-gradient(160deg,#a8743a,#5a3416)', svg: `<svg viewBox="0 0 60 60"><rect x="15" y="10" width="30" height="40" rx="3" fill="#f3ead7"/><rect x="15" y="10" width="6" height="40" fill="#d8c8a8"/>${[20, 26, 32, 38].map(y => `<path d="M25 ${y} H40" stroke="#b8a888" stroke-width="1.4"/>`).join('')}<rect x="38" y="10" width="3" height="40" fill="#7a2a1a"/><text x="33" y="47" font-family="Caveat,cursive" font-size="9" fill="#7a2a1a" text-anchor="middle">?</text></svg>` },
+  health: { bg: '#fff', svg: `<svg viewBox="0 0 60 60"><path d="M30 47 C14 36 9 28 9 21 a10 10 0 0 1 21 -3 a10 10 0 0 1 21 3 c0 7 -5 15 -21 26z" fill="#ff2d55"/><path d="M13 30 h9 l3 -6 l5 12 l3 -6 h14" stroke="#fff" stroke-width="2.6" fill="none" stroke-linejoin="round" stroke-linecap="round"/></svg>` },
   camera: { bg: 'linear-gradient(180deg,#c8c8cc,#8a8a90)', svg: `<svg viewBox="0 0 60 60"><rect x="12" y="20" width="36" height="24" rx="5" fill="#2a2a2e"/><rect x="22" y="16" width="14" height="6" rx="2" fill="#2a2a2e"/><circle cx="30" cy="32" r="8" fill="#4a4a50" stroke="#c8c8cc" stroke-width="2"/></svg>` },
 };
 function iconHTML(id) { const i = ICONS[id]; return `<div class="icon" style="background:${i.bg}">${i.svg}</div>`; }
@@ -161,7 +162,7 @@ const OS = {
     $('#wall').innerHTML = ART.homewall();
     this.renderHome();
     setTimeout(() => $('#home').classList.add('on'), 60);
-    if (!has('tipHome')) setTimeout(() => { flag('tipHome'); this.toastInfo('💡', 'Astuce', "Pour revenir à l'accueil : la barre en bas de l'écran (ou Échap)."); }, 2500);
+    if (!has('tipHome')) setTimeout(() => { flag('tipHome'); this.toastInfo('💡', 'Astuce', document.body.classList.contains('mobile') ? "Pour revenir à l'accueil : touche ou glisse la barre en bas de l'écran." : "Pour revenir à l'accueil : la barre en bas de l'écran (ou Échap)."); }, 2500);
   },
 
   /* ============ accueil ============ */
@@ -169,7 +170,7 @@ const OS = {
     ['calendar', 'Calendrier'], ['photos', 'Photos'], ['weather', 'Météo'], ['maps', 'Plans'],
     ['notes', 'Notes'], ['mail', 'Mail'], ['memos', 'Dictaphone'], ['settings', 'Réglages'],
     ['flux', 'Flux'], ['lumen', 'Lumen'], ['bank', 'Azur'], ['calc', 'Calculatrice'],
-    ['ombre', 'Ombre'], ['camera', 'Caméra'],
+    ['ombre', 'Ombre'], ['health', 'Santé'], ['camera', 'Caméra'],
   ],
   dockApps: [['phone', 'Téléphone'], ['messages', 'Messages'], ['browser', 'Navigateur'], ['carnet', 'Carnet']],
   renderHome() {
@@ -194,7 +195,7 @@ const OS = {
     const counts = {
       messages: Object.values(S.unread).reduce((a, b) => a + (b || 0), 0),
       phone: S.voicemails.filter(v => !v.heard).length + (S.missed || 0),
-      mail: has('mailOpen') ? STORY.mails.filter(m => !S.readMail[m.id]).length : 0,
+      mail: has('mailOpen') ? APPS.mail.all().filter(m => !S.readMail[m.id]).length : 0,
       carnet: Object.keys(S.newClues || {}).length,
       flux: has('fluxOpen') ? 0 : 37,
     };
@@ -308,7 +309,7 @@ function makeView(nav, { title = '', back = null, large = false, right = '', cls
 }
 
 /* ---------------- messages ---------------- */
-function threadMsgs(tid) { return (STORY.threads[tid]?.msgs || []).concat(S.msgs[tid] || []); }
+function threadMsgs(tid) { const T = STORY.threads[tid] || STORY.deletedThreads[tid]; return (T?.msgs || []).concat(S.msgs[tid] || []); }
 function ensureThread(tid) {
   if (!STORY.threads[tid] && tid === 'morel') {
     STORY.threads.morel = { name: '+33 6 39 98 71 44', ini: '?', col: '#636366', num: STORY.morelNum, msgs: [] };
@@ -361,9 +362,19 @@ const Msg = {
 };
 
 /* ---------------- lecteur d'étapes (appels, mémos) ---------------- */
+function stepsDuration(steps) {
+  let ms = 0;
+  for (const s of steps) {
+    if (s.t) ms += Voice.estimate(s.t, (Voice.PROFILES[s.who] || Voice.PROFILES.robot).rate) + 250;
+    else if (s.wait) ms += s.wait; else if (s.fx) ms += 1300; else if (s.foghorn) ms += 1500; else if (s.gull) ms += 700; else if (s.breath) ms += 2600; else if (s.rec) ms += s.rec * 1000;
+    else if (s.me) ms += Math.min(2600, 900 + s.me.length * 25);
+  }
+  return ms;
+}
 async function runSteps(steps, ui, token) {
   for (const s of steps) {
     if (token.cancel) return;
+    if (s.rec) { for (let i = 0; i < s.rec * 10 && !token.cancel; i++) { if (i % 10 === 0) ui.rec && ui.rec(i / 10); await sleep(100); } ui.rec && ui.rec(false); continue; }
     if (s.sfx) { Sound.layer(s.sfx, true); continue; }
     if (s.stopsfx) { Sound.layer(s.stopsfx, false); continue; }
     if (s.foghorn) { Sound.foghorn(); ui.fx && ui.fx('(une corne de brume, au loin)'); await sleep(1500); continue; }
@@ -405,11 +416,12 @@ const Call = {
       me: t => add('me', '« ' + esc(t) + ' »'),
       fx: t => add('fx', esc(t)),
       choice: (labels, token) => new Promise(res => {
-        $('.c-grid', el)?.classList.add('hide');
         ch.innerHTML = labels.map((l, i) => `<button class="choice" data-i="${i}">${esc(l)}</button>`).join('');
-        ch.onclick = e => { const b = e.target.closest('.choice'); if (!b) return; ch.innerHTML = ''; $('.c-grid', el)?.classList.remove('hide'); Sound.fx.tap(); res(+b.dataset.i); };
+        el.style.setProperty('--subBottom', (ch.offsetHeight + 196) + 'px');
+        ch.onclick = e => { const b = e.target.closest('.choice'); if (!b) return; ch.innerHTML = ''; el.style.removeProperty('--subBottom'); Sound.fx.tap(); res(+b.dataset.i); };
         const chk = setInterval(() => { if (token.cancel) { clearInterval(chk); ch.innerHTML = ''; res(0); } }, 200);
       }),
+      rec: v => { const st = $('.c-state', el); if (!st) return; if (v === false) { st.textContent = 'Message enregistré'; return; } st.innerHTML = '<span style="color:var(--red)">● Enregistrement · 0:0' + v + '</span>'; },
       speaking: on => OS.island(on ? `<span>📞</span><div class="isl-wave green"><i></i><i></i><i></i><i></i></div>` : `<span>📞</span><span style="color:var(--green)">${Call.elapsed()}</span>`),
     };
   },
@@ -424,8 +436,7 @@ const Call = {
     return el;
   },
   activeButtons(el) {
-    el.insertAdjacentHTML('beforeend', `<div class="c-grid"><div><i>🔇</i>silence</div><div><i>⌨️</i>clavier</div><div><i>🔊</i>haut-parleur</div><div><i>➕</i>ajouter</div><div><i>📹</i>FaceTime</div><div><i>👤</i>contacts</div></div>
-      <div class="c-btns"><button class="c-btn red hang"><svg viewBox="0 0 60 60"><path d="M22.6 15.5c-1-1.3-2.9-1.4-4-.2l-3.2 3.2c-2 2-2.4 5.1-.9 7.5 5 8.4 11.9 15.3 20.3 20.3 2.4 1.5 5.5 1.1 7.5-.9l3.2-3.2c1.2-1.1 1.1-3-.2-4l-5.3-4c-1.1-.8-2.6-.7-3.6.2l-2 2c-4.1-2.1-7.9-5.9-10-10l2-2c.9-1 1-2.5.2-3.6z"/></svg></button></div>`);
+    el.insertAdjacentHTML('beforeend', `<div class="c-btns"><button class="c-btn red hang"><svg viewBox="0 0 60 60"><path d="M22.6 15.5c-1-1.3-2.9-1.4-4-.2l-3.2 3.2c-2 2-2.4 5.1-.9 7.5 5 8.4 11.9 15.3 20.3 20.3 2.4 1.5 5.5 1.1 7.5-.9l3.2-3.2c1.2-1.1 1.1-3-.2-4l-5.3-4c-1.1-.8-2.6-.7-3.6.2l-2 2c-4.1-2.1-7.9-5.9-10-10l2-2c.9-1 1-2.5.2-3.6z"/></svg></button></div>`);
     $('.c-btns', el).style.gap = '0';
     $('.hang', el).onclick = () => this.end(true);
   },
@@ -471,7 +482,6 @@ const Call = {
     const name = displayName || (c ? c.name : num);
     const el = this.frame({ name, state: 'appel…', ini: c ? c.ini : '', col: c ? c.col : null });
     this.activeButtons(el);
-    $('.c-grid', el).classList.add('hide');
     OS.island(`<span>📞</span><span>appel…</span>`);
     S.recents.unshift({ name, num, type: 'out', when: nowHM() }); save();
     const tok = this.token = { cancel: false };
@@ -480,7 +490,6 @@ const Call = {
     await sleep(handler.rings * 3000 + 300);
     Sound.stopDial();
     if (tok.cancel) return;
-    $('.c-grid', el).classList.remove('hide');
     this.startTimer(el);
     Sound.click();
     if (handler.kind !== 'voicemail-silent') Sound.layer('line', true);
@@ -518,18 +527,26 @@ const Overlay = {
     Bus.emit('overlayclose');
   },
   async play({ title, date, steps, cls = '', onEnd }) {
+    const total = stepsDuration(steps);
+    const fmt = ms => { const t = Math.max(0, Math.round(ms / 1000)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
     const node = h(`<div class="player ${cls}"><h2>${esc(title)}</h2><div class="pdate">${esc(date || '')}</div>
-      <div class="pwave">${Array.from({ length: 34 }, () => '<i></i>').join('')}</div><div class="ptime">0:00</div><div class="psub"></div>
+      <div class="pwave">${Array.from({ length: 34 }, () => '<i></i>').join('')}</div>
+      <div class="pprog"><div class="pb"><div></div></div><div class="pt"><span class="pe">0:00</span><span class="pr">-${fmt(total)}</span></div></div>
+      <div class="psub"></div><button class="preplay">↺ Réécouter</button>
       <button class="pclose">✕</button></div>`);
     this.open(node);
     $('.pclose', node).onclick = () => this.close();
-    const bars = $$('.pwave i', node), sub = $('.psub', node);
-    let speaking = false, t0 = Date.now();
+    const bars = $$('.pwave i', node), sub = $('.psub', node), fill = $('.pb div', node);
+    let speaking = false, finished = false;
+    const t0 = Date.now();
     const anim = setInterval(() => {
-      bars.forEach(b => b.style.height = (speaking ? 6 + Math.random() * 70 : 4 + Math.random() * 8) + 'px');
-      const s = Math.floor((Date.now() - t0) / 1000); const pt = $('.ptime', node); if (pt) pt.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      if (!node.isConnected) { clearInterval(anim); return; }
+      bars.forEach(b => b.style.height = (speaking ? 6 + Math.random() * 70 : finished ? 4 : 4 + Math.random() * 8) + 'px');
+      const el = finished ? total : Math.min(Date.now() - t0, total);
+      fill.style.width = (el / total * 100) + '%';
+      $('.pe', node).textContent = fmt(el); $('.pr', node).textContent = '-' + fmt(total - el);
     }, 110);
-    const add = (cls, html) => { const l = h(`<div class="line ${cls}">${html}</div>`); sub.appendChild(l); while (sub.children.length > 3) sub.firstElementChild.remove(); };
+    const add = (c, html) => { const l = h(`<div class="line ${c}">${html}</div>`); sub.appendChild(l); while (sub.children.length > 3) sub.firstElementChild.remove(); };
     const ui = {
       line: (n, t) => add('', `${n ? `<div class="who">${esc(n)}</div>` : ''}${esc(t)}`),
       fx: t => add('fx', esc(t)), me: t => add('fx', esc(t)),
@@ -539,8 +556,12 @@ const Overlay = {
     OS.island(`<span>🎙️</span><div class="isl-wave"><i></i><i></i><i></i><i></i></div>`);
     const tok = this.token = { cancel: false };
     await runSteps(steps, ui, tok);
-    clearInterval(anim);
     Sound.stopLayers(['drone']);
-    if (!tok.cancel) { add('fx', '— fin de l\'enregistrement —'); OS.island(null); onEnd && onEnd(); }
+    if (tok.cancel) { clearInterval(anim); return; }
+    finished = true; speaking = false;
+    add('fx', '— fin du message —'); OS.island(null);
+    const rp = $('.preplay', node); rp.classList.add('on');
+    rp.onclick = () => { this.close(); setTimeout(() => this.play({ title, date, steps, cls }), 50); };
+    onEnd && onEnd();
   },
 };

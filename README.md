@@ -26,11 +26,13 @@ Sur mobile, le jeu passe en plein écran.
 
 ## Ce qu'il y a dedans
 
-- **Un téléphone complet** : écran verrouillé, accueil, île dynamique, bannières de notification, 18 applis (Messages, Téléphone, Photos, Mail, Notes, Plans, Calendrier, Navigateur, Réglages, Météo, Dictaphone, Calculatrice, Flux, Lumen, Azur, Ombre, Caméra, et ton Carnet).
+- **Un téléphone complet** : écran verrouillé, accueil, île dynamique, bannières de notification, 19 applis (Messages, Santé, Téléphone, Photos, Mail, Notes, Plans, Calendrier, Navigateur, Réglages, Météo, Dictaphone, Calculatrice, Flux, Lumen, Azur, Ombre, Caméra, et ton Carnet).
 - **Des événements en temps réel** : SMS qui arrivent pendant que tu joues, appels entrants (avec choix de réponses), messages vocaux laissés si tu ne décroches pas.
 - **Un clavier qui marche vraiment** : compose les numéros que tu trouves. Certains répondent.
+- **Des éléments supprimés à retrouver** : photos, conversation effacée, mémos vocaux, brouillons, envois et corbeille du Mail.
+- **Une appli Santé** qui en dit plus long que prévu.
 - **7 verrous** à faire sauter, chacun avec son indice caché ailleurs dans le téléphone.
-- **33 indices** consignés dans ton carnet, en quatre pistes.
+- **42 indices** consignés dans ton carnet, en quatre pistes.
 - **Une aide progressive** : appelle Jade, ou demande un indice dans ton carnet.
 - **4 fins**.
 
