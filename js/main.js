@@ -206,7 +206,7 @@ const Main = {
       <div class="in-note">🎧 Jeu sonore : mets un casque, monte le son.<br>Durée : 45 min à 1 h 30 · progression sauvegardée automatiquement.</div>
       <div class="in-warn">Fiction. Tous les personnages, entreprises, numéros et applications sont inventés. Le jeu aborde la surveillance, le harcèlement et les violences conjugales.</div>`;
     $('.go', I).onclick = () => { Sound.init(); resume ? this.resume() : this.prologue(); };
-    const nb = $('.new', I); if (nb) nb.onclick = () => { if (confirm('Effacer la progression et recommencer ?')) this.reset(); };
+    const nb = $('.new', I); if (nb) nb.onclick = () => twice(nb, 'Cliquer encore pour tout effacer', () => this.reset());
   },
   async prologue() {
     const I = $('#intro');
@@ -346,7 +346,7 @@ const Main = {
       $('#screen').style.filter = '';
       OS.open('carnet'); setTimeout(() => this.decision(), 100);
     };
-    $('.newg', En).onclick = () => { if (confirm('Effacer la progression et recommencer ?')) this.reset(); };
+    $('.newg', En).onclick = e => twice(e.currentTarget, 'Cliquer encore pour tout effacer', () => this.reset());
     $('.cred', En).onclick = () => { const c = $('.credits', En); c.style.display = c.style.display === 'none' ? 'block' : 'none'; };
   },
 };

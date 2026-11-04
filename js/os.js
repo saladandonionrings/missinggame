@@ -7,6 +7,11 @@ function h(html) { const t = document.createElement('template'); t.innerHTML = h
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+function twice(el, label, fn) {
+  if (el.dataset.armed) { fn(); return; }
+  const old = el.innerHTML; el.dataset.armed = '1'; el.innerHTML = label;
+  setTimeout(() => { if (el.isConnected) { delete el.dataset.armed; el.innerHTML = old; } }, 4000);
+}
 const nowHM = () => { const d = new Date(); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
 
 /* ---------------- état & sauvegarde ---------------- */

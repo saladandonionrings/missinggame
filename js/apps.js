@@ -437,7 +437,7 @@ APPS.settings = {
       const k = r.dataset.k;
       if (k === 'avion') { OS.toastInfo('✈️', 'Mode Avion', "Couper le réseau ? Nora l'a fait. Toi, tu as encore besoin d'écouter."); return; }
       if (k === 'sound') { const m = !Sound.muted; Sound.setMuted(m); S.muted = m; save(); $('.toggle', r).classList.toggle('on', !m); Main.syncMute(); return; }
-      if (k === 'reset') { if (confirm("Effacer ta progression et recommencer depuis le début ?")) Main.reset(); return; }
+      if (k === 'reset') { twice(r.querySelector('b'), 'Touchez encore pour tout effacer', () => Main.reset()); return; }
       if (k === 'wifi') return this.wifi(nav);
       if (k === 'priv') return this.priv(nav);
       if (k === 'screen') return this.screenTime(nav);
