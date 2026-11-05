@@ -344,11 +344,12 @@ const Msg = {
   openThread: null,
   async receive(tid, lines, { gap = 1100, notifyTitle = null } = {}) {
     ensureThread(tid);
-    for (const line of lines) {
+    for (const raw of lines) {
+      const m = typeof raw === 'string' ? { f: 'them', t: raw } : raw, line = m.t;
       Bus.emit('typing', { tid, on: true });
       await sleep(Math.min(3200, gap + line.length * 22));
       Bus.emit('typing', { tid, on: false });
-      pushMsg(tid, { f: 'them', t: line });
+      pushMsg(tid, { f: m.f, t: line });
       const open = Msg.openThread === tid && OS.app === 'messages';
       if (open) Sound.fx.message();
       else OS.notify({ app: 'messages', title: notifyTitle || STORY.threads[tid].name, body: line, sound: 'message', onTap: () => OS.open('messages', null, { thread: tid }) });

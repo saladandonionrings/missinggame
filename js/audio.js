@@ -3,7 +3,7 @@
    Aucun fichier son : tout est généré en direct.
    ========================================================== */
 const Sound = (() => {
-  let ctx = null, master = null, muted = false;
+  let ctx = null, master = null, wet = null, muted = false;
   let ringNode = null, ambNode = null;
   const layers = {};
 
@@ -16,6 +16,12 @@ const Sound = (() => {
       master.gain.value = muted ? 0 : 0.9;
       const comp = ctx.createDynamicsCompressor();
       master.connect(comp); comp.connect(ctx.destination);
+      // réverbération synthétique : bruit qui décroît sur 2 s
+      const len = ctx.sampleRate * 2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+      const conv = ctx.createConvolver(); conv.buffer = ir;
+      wet = ctx.createGain(); wet.gain.value = 0.32;
+      wet.connect(conv); conv.connect(master);
     }
     if (ctx.state === 'suspended') ctx.resume();
   }
@@ -38,6 +44,11 @@ const Sound = (() => {
     tone(f, t, len, { vol, dest });
     tone(f * 2.003, t, len * 0.5, { vol: vol * 0.3, dest });
     tone(f * 3.99, t, len * 0.22, { vol: vol * 0.1, dest });
+  }
+  function chime(f, t, vol = .14, len = 1.2) { bell(f, t, vol, len, master); if (wet) bell(f, t, vol * .8, len, wet); }
+  function dtmfTone(k) {
+    const T = { 1: [697, 1209], 2: [697, 1336], 3: [697, 1477], 4: [770, 1209], 5: [770, 1336], 6: [770, 1477], 7: [852, 1209], 8: [852, 1336], 9: [852, 1477], '*': [941, 1209], 0: [941, 1336], '#': [941, 1477] }[k];
+    if (!T) return; const t = now(); T.forEach(f => tone(f, t, 0.16, { vol: 0.05, attack: 0.004 }));
   }
   function marimba(f, t, vol = 0.16, dest = master) {
     tone(f, t, 0.45, { vol, dest });
@@ -63,24 +74,26 @@ const Sound = (() => {
   function vib(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
 
   const fx = {
-    tap() { if (!ok()) return; noiseBurst(now(), 0.03, { freq: 4000, vol: 0.05 }); },
-    key() { if (!ok()) return; const t = now(); tone(900, t, 0.05, { vol: 0.05, type: 'triangle' }); noiseBurst(t, 0.02, { freq: 5000, vol: 0.03 }); },
-    notif() { if (!ok()) return; const t = now(); bell(1318.5, t, 0.12, 0.7); bell(1975.5, t + 0.12, 0.11, 1.2); vib(80); },
-    message() { if (!ok()) return; const t = now(); marimba(1567.98, t, 0.14); marimba(2093, t + 0.09, 0.12); vib([40, 40, 40]); },
+    tap() {}, key() {}, page() {}, whoosh() {},
+    dtmf(k) { if (ok()) dtmfTone(k); },
+    // notification d'appli : carillon ascendant à trois notes
+    notif() { if (ok()) { const t = now(); chime(1046.5, t, .11, .9); chime(1318.5, t + .11, .1, .9); chime(1568, t + .22, .11, 1.6); } vib(90); },
+    // SMS : « ploc » arrondi puis deux notes claires
+    message() { if (ok()) { const t = now(); tone(520, t, .09, { vol: .12, slide: 2.3, attack: .004 }); chime(1760, t + .07, .12, 1.1); chime(2349.3, t + .17, .1, 1.4); } vib([50, 60, 50]); },
+    // mail : glissement descendant doux
+    mail() { if (ok()) { const t = now(); noiseBurst(t, .22, { freq: 1600, q: .8, vol: .05 }); chime(1318.5, t + .05, .1, 1); chime(987.8, t + .16, .1, 1.5); } vib(60); },
     sent() { if (!ok()) return; const t = now(); const s = noiseSrc(), f = ctx.createBiquadFilter(), g = ctx.createGain(); f.type = 'bandpass'; f.Q.value = 2; f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(5000, t + 0.25); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3); s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + 0.35); },
     unlock() { if (!ok()) return; const t = now(); noiseBurst(t, 0.04, { freq: 2500, vol: 0.1 }); bell(880, t + 0.03, 0.08, 0.5); bell(1320, t + 0.1, 0.08, 0.7); },
     lock() { if (!ok()) return; const t = now(); tone(300, t, 0.08, { vol: 0.15, type: 'triangle', slide: 0.5 }); noiseBurst(t, 0.05, { freq: 1200, vol: 0.12 }); },
     error() { if (ok()) { const t = now(); tone(150, t, 0.11, { vol: 0.09, type: 'square' }); tone(150, t + 0.16, 0.11, { vol: 0.09, type: 'square' }); } vib([70, 50, 70]); },
     success() { if (!ok()) return; const t = now(); [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => bell(f, t + i * 0.08, 0.1, 1.0)); },
-    clue() { if (!ok()) return; const t = now(); for (let i = 0; i < 3; i++) noiseBurst(t + i * 0.06, 0.05, { freq: 2600 + i * 400, q: 3, vol: 0.06 }); bell(2637, t + 0.22, 0.05, 0.8); bell(3136, t + 0.3, 0.04, 0.8); },
+    clue() { if (!ok()) return; const t = now(); chime(1568, t, .06, .8); chime(2093, t + .09, .06, 1.2); },
     boot() { if (!ok()) return; const t = now(); [130.8, 196, 261.6, 329.6, 392].forEach((f, i) => tone(f, t + i * 0.12, 3.2, { vol: 0.06, attack: 0.8, type: 'sine' })); },
     glitch() { if (!ok()) return; const t = now(); for (let i = 0; i < 9; i++) tone(80 + Math.random() * 1600, t + i * 0.035, 0.04, { vol: 0.06, type: 'square' }); noiseBurst(t, 0.3, { freq: 800, vol: 0.12, q: 0.5 }); vib([30, 30, 30, 30, 90]); },
     vault() { if (!ok()) return; const t = now(); tone(70, t, 0.6, { vol: 0.3, type: 'sine', slide: 0.6 }); noiseBurst(t, 0.15, { freq: 400, vol: 0.2 }); [392, 523.25, 783.99].forEach((f, i) => bell(f, t + 0.9 + i * 0.12, 0.08, 1.4)); },
     beep() { if (!ok()) return; tone(1000, now(), 0.45, { vol: 0.12, attack: 0.01 }); },
     hangup() { if (!ok()) return; const t = now(); for (let i = 0; i < 3; i++) tone(440, t + i * 0.28, 0.16, { vol: 0.07, type: 'sine', attack: 0.01 }); },
     pop() { if (!ok()) return; tone(600, now(), 0.08, { vol: 0.08, slide: 1.8 }); },
-    whoosh() { if (!ok()) return; const t = now(); noiseBurst(t, 0.35, { freq: 900, vol: 0.06, q: 0.7 }); },
-    page() { if (!ok()) return; const t = now(); noiseBurst(t, 0.18, { freq: 1800, vol: 0.05, q: 0.6 }); },
     heart() { if (!ok()) return; const t = now(); tone(55, t, 0.18, { vol: 0.35 }); tone(52, t + 0.24, 0.22, { vol: 0.28 }); },
     shutter() { if (!ok()) return; const t = now(); noiseBurst(t, 0.04, { freq: 3000, vol: 0.2 }); noiseBurst(t + 0.07, 0.05, { freq: 2000, vol: 0.18 }); },
     vibrate() { if (ok()) { const t = now(); for (let i = 0; i < 2; i++) { tone(170, t + i * 0.5, 0.35, { vol: 0.05, type: 'sawtooth', attack: 0.02 }); } } vib([300, 200, 300]); },
@@ -99,7 +112,11 @@ const Sound = (() => {
       if (!alive) return;
       if (!muted) {
         const t = now() + 0.02;
-        seq.forEach(([f, d]) => kind === 'masked' ? tone(f, t + d, 0.4, { vol: 0.08, type: 'triangle' }) : marimba(f, t + d, 0.15));
+        seq.forEach(([f, d], i) => {
+          if (kind === 'masked') { tone(f, t + d, 0.5, { vol: 0.1, type: 'triangle' }); if (wet) tone(f, t + d, 0.5, { vol: 0.08, type: 'triangle', dest: wet }); return; }
+          marimba(f, t + d, 0.2); if (wet) marimba(f, t + d, 0.14, wet);
+          if (i % 4 === 0) tone(f / 4, t + d, 0.6, { vol: 0.12 });
+        });
       }
       vib([400, 300, 400]);
       id = setTimeout(loop, kind === 'masked' ? 2200 : 2400);
@@ -228,27 +245,16 @@ const Voice = (() => {
   // La voix est coupée si elle dépasse, pour que messages et appels gardent un tempo fixe.
   function estimate(text, rate = 1) { return Math.round(Math.max(1400, (text.length * 68) / rate + 650)); }
   let keep = null;
+  // Les répliques ne sont plus lues à voix haute : elles s'affichent en sous-titres
+  // pendant une durée qui dépend de leur longueur (comme un vrai message).
   function say(text, who = 'robot', token) {
+    const p = PROFILES[who] || PROFILES.robot;
+    const dur = estimate(text, p.rate);
     return new Promise(res => {
-      const p = PROFILES[who] || PROFILES.robot;
-      const dur = estimate(text, p.rate);
-      let done = false, speaking = false;
-      const fin = () => { if (done) return; done = true; clearInterval(chk); clearTimeout(cap); if (speaking) { try { synth.cancel(); } catch (e) {} } res(); };
+      let done = false;
+      const fin = () => { if (!done) { done = true; clearInterval(chk); clearTimeout(cap); res(); } };
       const chk = setInterval(() => { if (token && token.cancel) fin(); }, 100);
-      const cap = setTimeout(fin, dur + 400);
-      if (!synth || Sound.muted || !voices.length) return;
-      try {
-        synth.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        keep = u; // évite que Chrome libère l'objet avant la fin (onend jamais appelé)
-        u.lang = 'fr-FR';
-        const v = pick(p.g); if (v) u.voice = v;
-        u.pitch = p.pitch; u.rate = p.rate; u.volume = 1;
-        u.onstart = () => { speaking = true; };
-        u.onend = () => { speaking = false; };
-        u.onerror = () => { speaking = false; };
-        synth.speak(u);
-      } catch (e) {}
+      const cap = setTimeout(fin, dur);
     });
   }
   function stop() { try { synth && synth.cancel(); } catch (e) {} }

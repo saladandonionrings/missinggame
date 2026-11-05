@@ -649,3 +649,55 @@ STORY.lateMails.news = { id: 'news', from: 'Le Contrepoint', addr: 'lettre@lecon
 Vous avez une information d'intérêt public ? Notre rédaction protège ses sources.
 
 <span style="font-size:12px;color:#888">Vous êtes abonnée à cette lettre depuis le 24 octobre.</span>` };
+
+/* ---------------- Mails et SMS supplémentaires (arrivent pendant l'enquête) ---------------- */
+STORY.clues.L14 = { c: 'L', t: "Colis : une carte de randonnée IGN « 0417 — Île d'Ouessant », commandée le 26/10." };
+STORY.clues.P14 = { c: 'P', t: "Une avocate attend Nora « dès son retour » : la publication est préparée." };
+Object.assign(STORY.lateMails, {
+  cloud: { id: 'cloud', from: 'Ondes Cloud', addr: 'noreply@cloud.ondes.fr', ini: '☁', col: '#64d2ff', date: "aujourd'hui", time: '', subj: 'Votre téléphone n\'a pas été sauvegardé depuis 5 jours',
+    body: `Bonjour Nora,
+
+La dernière sauvegarde de « iPhone de Nora » date du 30 octobre à 23:41.
+La sauvegarde automatique a été désactivée manuellement le 30 octobre à 23:44.
+
+Vos photos, messages et notes ne sont plus copiés sur nos serveurs.
+Réactivez la sauvegarde pour ne rien perdre !
+
+<span style="font-size:12px;color:#888">Ce qui n'est pas sauvegardé ne peut pas être récupéré. Par personne.</span>` },
+  avocate: { id: 'avocate', from: 'Me Hélène Garnier', addr: 'h.garnier@garnier-avocats.fr', ini: 'HG', col: '#30d158', date: "aujourd'hui", time: '', subj: 'Rendez-vous — de la part de C. A.', clue: 'P14',
+    body: `Madame,
+
+Claire Asselin m'a transmis vos coordonnées. Je serai disponible dès votre retour pour préparer votre dossier de lanceuse d'alerte.
+
+En attendant :
+• ne signez rien, surtout pas une rupture conventionnelle ;
+• ne répondez à aucune proposition financière ;
+• conservez les originaux en lieu sûr, hors de tout appareil connecté.
+
+La loi vous protège, à condition que nous agissions vite.
+
+Hélène Garnier
+Avocate au barreau de Paris` },
+  bastien2: { id: 'bastien2', from: 'Bastien Leroy', addr: 'b.leroy@lumen.app', ini: 'BL', col: '#8b7bff', date: "aujourd'hui", time: '', subj: 'Dernière proposition',
+    body: `Nora,
+
+Je ne sais pas qui lit tes messages en ce moment. Peut-être toi, peut-être pas.
+
+L'offre est montée à 80 000 €. Elle tient jusqu'à vendredi.
+Après, ce sont nos avocats. Et crois-moi, ils sont meilleurs que les tiens.
+
+Tu as construit Lumen avec moi. Ne le détruis pas pour une seule affaire.
+
+B.` },
+  rhrappel: { id: 'rhrappel', from: 'Lumen — Juridique', addr: 'juridique@lumen.app', ini: '§', col: '#8b7bff', date: "aujourd'hui", time: '', subj: 'Rappel de vos obligations de confidentialité',
+    body: `Madame,
+
+Une connexion au mode développeur de l'application a été détectée depuis votre appareil personnel.
+
+Nous vous rappelons l'article 9 de votre contrat de travail : toute divulgation d'informations relatives aux partenaires commerciaux de Lumen exposera son auteur à des poursuites.
+
+Cet avertissement vaut également pour toute personne ayant accès à votre appareil.
+
+Le service juridique` },
+});
+STORY.threads.colix = { name: 'Colix', ini: '📦', col: '#ffd60a', sms: true, msgs: [] };

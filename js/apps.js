@@ -74,14 +74,19 @@ APPS.messages = {
       if (set) {
         comp.innerHTML = `<div class="chs"><div class="lbl">Répondre</div>${set.map((o, i) => `<button data-i="${i}">${esc(o.label)}</button>`).join('')}</div>`;
         comp.onclick = e => { const b = e.target.closest('button'); if (b) Msg.choose(tid, +b.dataset.i); };
+      } else if (!T.sms && !T.deleted && Topics.list(tid).length) {
+        const ts = Topics.list(tid);
+        comp.innerHTML = `<div class="chs"><div class="lbl">Écrire à ${esc(T.group ? 'tout le groupe' : (T.name || '').replace(/ \(.*\)/, ''))}</div>${ts.map(t => `<button data-d="${t.id}">${esc(t.label)}</button>`).join('')}</div>`;
+        comp.onclick = e => { const b = e.target.closest('button'); if (b) Topics.say(tid, b.dataset.d); };
       } else {
         comp.innerHTML = `<div class="fake">${T.sms ? 'Réponse impossible à ce numéro' : 'Message'}</div>`;
-        comp.onclick = () => { Sound.fx.error(); OS.toastInfo('✋', "Ce n'est pas ton téléphone", "Tu ne peux répondre que quand quelqu'un attend ta réponse."); };
+        comp.onclick = () => { Sound.fx.error(); OS.toastInfo('✋', "Rien à lui dire pour l'instant", T.sms ? "On ne peut pas répondre à ce numéro." : "Continue l'enquête : chaque découverte te donnera de quoi lui écrire."); };
       }
       setTimeout(scroll, 30);
     };
     renderComp();
     live(v, 'choices', d => { if (d === tid) renderComp(); });
+    live(v, 'clue', () => renderComp());
     if (tid === 'theo') flag('readTheo');
     if (T.deleted) { comp.onclick = null; comp.innerHTML = '<div class="fake" style="justify-content:center;color:var(--red);border-color:#3a1a1a">Conversation supprimée par Nora le 30 oct.</div>'; flag('readBastienDel'); if (T.clue) setTimeout(() => clue(T.clue), 1200); }
   },
@@ -182,7 +187,7 @@ APPS.phone = {
       $('.who', v).textContent = c ? c.name : '';
       $('.dl', v).style.visibility = num ? 'visible' : 'hidden';
     };
-    $('.keypad', v).onclick = e => { const b = e.target.closest('button'); if (!b || num.length > 14) return; Sound.fx.key(); num += b.dataset.k; upd(); };
+    $('.keypad', v).onclick = e => { const b = e.target.closest('button'); if (!b || num.length > 14) return; Sound.fx.dtmf(b.dataset.k); num += b.dataset.k; upd(); };
     $('.dl', v).onclick = () => { num = num.slice(0, -1); upd(); };
     $('.callgo', v).onclick = () => { if (!num) { const last = S.lastDial; if (last) { num = last; upd(); } return; } S.lastDial = num; save(); Call.outgoing(num); };
   },
@@ -486,7 +491,7 @@ APPS.settings = {
       <div class="group">${row('🔔', '#ff453a', 'Notifications', '', 'notif')}${row('⏳', '#5e5ce6', 'Temps d\'écran', '', 'screen')}${row('✋', '#0a84ff', 'Confidentialité et sécurité', '', 'priv')}</div>
       <div class="group">${row('⚙️', '#8e8e93', 'Général', '', 'gen')}${row('🖼️', '#30b0c7', 'Fond d\'écran', '', 'wall')}</div>
       <div class="ghead">Jeu — Hors Ligne</div>
-      <div class="group"><div class="row" data-k="sound" style="--sepl:58px"><div class="ricon" style="background:#ff2d55">🔊</div><div class="rmain"><b>Son et voix</b><small>${Voice.available ? 'Voix de synthèse française détectée' : 'Pas de voix française : sous-titres seuls'}</small></div><div class="toggle ${Sound.muted ? '' : 'on'}"></div></div>
+      <div class="group"><div class="row" data-k="sound" style="--sepl:58px"><div class="ricon" style="background:#ff2d55">🔊</div><div class="rmain"><b>Son</b><small>Sonneries, notifications et ambiances</small></div><div class="toggle ${Sound.muted ? '' : 'on'}"></div></div>
       <div class="row" data-k="reset" style="--sepl:58px"><div class="ricon" style="background:#3a3a3c">↺</div><div class="rmain"><b style="color:var(--red)">Recommencer l'enquête</b></div></div></div>` });
     nav.push(v);
     const av = $('.prof .av', v); av.style.background = 'linear-gradient(135deg,#c56b9b,#6b4fc5)';

@@ -89,7 +89,7 @@ const ART = (() => {
         <rect y="322" width="300" height="78" fill="url(#${g}tb)"/>
         <path d="M0 322 H300" stroke="#a0663a" stroke-width="1.5" opacity=".6"/>
         ${catSit(150, 262, .92, { g, r: R, rim: '#ffb47a' })}
-        <g transform="rotate(-9 150 175)"><path d="M120 214 L150 140 L180 214 Q150 224 120 214Z" fill="url(#${g}ht)"/>
+        <g transform="translate(150 184) rotate(-10) scale(.86) translate(-150 -214)"><path d="M120 214 L150 140 L180 214 Q150 224 120 214Z" fill="url(#${g}ht)"/>
           <path d="M131 188 Q150 194 169 188 M139 166 Q150 170 161 166" stroke="#ffe066" stroke-width="5" fill="none"/>
           ${Array.from({ length: 6 }, (_, i) => `<circle cx="${135 + i * 6}" cy="${205 - (i % 2) * 6}" r="2" fill="#fff" opacity=".8"/>`).join('')}
           <circle cx="150" cy="140" r="9" fill="#ffe066"/><circle cx="147" cy="137" r="3" fill="#fff" opacity=".7"/></g>

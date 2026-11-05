@@ -11,6 +11,8 @@ Puis décide de ce que tu fais de tout ce que tu sais.
 
 ## Jouer
 
+**En ligne :** <https://saladandonionrings.github.io/missinggame/> (GitHub Pages)
+
 Aucune installation, aucune dépendance. Ouvre `index.html` dans un navigateur récent, ou sers le dossier :
 
 ```bash
@@ -19,7 +21,7 @@ python3 -m http.server 8000
 
 puis va sur <http://localhost:8000>.
 
-🎧 C'est un jeu sonore. Les sons sont synthétisés en direct (Web Audio). Les appels, la messagerie et les mémos sont lus par la synthèse vocale française du navigateur, avec des sous-titres. Si aucune voix française n'est installée, seuls les sous-titres s'affichent.
+🎧 C'est un jeu sonore : sonneries, notifications, tonalités et ambiances (vent, mer, corne de brume…) sont synthétisés en direct (Web Audio). Les appels, la messagerie et les mémos vocaux s'affichent en sous-titres, au rythme de la voix.
 
 Durée : de 45 min à 1 h 30. La progression est sauvegardée dans le navigateur.
 Sur mobile, le jeu passe en plein écran.
@@ -32,7 +34,8 @@ Sur mobile, le jeu passe en plein écran.
 - **Des éléments supprimés à retrouver** : photos, conversation effacée, mémos vocaux, brouillons, envois et corbeille du Mail.
 - **Une appli Santé** qui en dit plus long que prévu.
 - **7 verrous** à faire sauter, chacun avec son indice caché ailleurs dans le téléphone.
-- **42 indices** consignés dans ton carnet, en quatre pistes.
+- **44 indices** consignés dans ton carnet, en quatre pistes.
+- **Des conversations qui dépendent de tes découvertes** : écris à Jade, Morel, Théo, Maman ou aux amis de Nora à propos de ce que tu as trouvé. Ils réagissent, et Morel se méfie des fausses pistes.
 - **Une aide progressive** : appelle Jade, ou demande un indice dans ton carnet.
 - **4 fins**.
 
