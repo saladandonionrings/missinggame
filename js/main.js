@@ -9,15 +9,17 @@ const CHOICES = {
     { label: "Tu es sûre qu'elle veut qu'on la retrouve ?", then() { Msg.receive('jade', ["…", "Je sais pas. Mais moi j'ai besoin de savoir qu'elle va bien."]); } },
   ],
   jadeCheck: [
-    { label: "Oui. Un « inspecteur Morel », de la police judiciaire.", then() { flag('toldJadeMorel'); Msg.receive('jade', ["Un inspecteur ??", "Les flics m'ont dit hier qu'ils ne cherchaient PAS Nora. Qu'elle était majeure.", "Attends. J'appelle le commissariat."]); } },
-    { label: "Non, personne.", then() { flag('lieJade'); Msg.receive('jade', ["Ok…", "Moi j'ai rappelé la police ce matin. Toujours la même réponse : « majeure et libre ». Ils ne font rien."]); } },
+    { label: "Oui. Un « inspecteur Morel », de la police judiciaire.", when: () => cl('M1'), then() { flag('toldJadeMorel'); Msg.receive('jade', ["Un inspecteur ??", "Les flics m'ont dit hier qu'ils ne cherchaient PAS Nora. Qu'elle était majeure.", "Attends. J'appelle le commissariat."]); } },
+    { label: "Un numéro inconnu a essayé d'appeler. Je n'ai pas décroché.", when: () => !cl('M1'), then() { Msg.receive('jade', ["Un numéro inconnu ?", "Regarde s'il a laissé un message vocal. Ou rappelle-le, toi."]); } },
+    { label: "Non, personne.", when: () => !cl('M1'), then() { Msg.receive('jade', ["Ok…", "Moi j'ai rappelé la police ce matin. Toujours la même réponse : « majeure et libre ». Ils ne font rien."]); } },
+    { label: "Non, personne.", when: () => cl('M1'), then() { flag('lieJade'); Msg.receive('jade', ["Ok…", "Moi j'ai rappelé la police ce matin. Toujours la même réponse : « majeure et libre ». Ils ne font rien."]); } },
   ],
   jadePolice: [
     { label: "Alors qui c'est ?", then() { Msg.receive('jade', ["J'en sais rien. Mais il ment.", "Cherche son nom dans ses mails. Rappelle son numéro. Et ne lui dis RIEN."]); } },
     { label: "D'accord. Je ne lui dirai rien.", then() { Msg.receive('jade', ["Merci. Je deviens folle."]); } },
   ],
   jadeLumen: [
-    { label: "Supprime-le. Tout de suite. Je t'expliquerai.", then() { flag('jadeDeletedLumen'); Msg.receive('jade', ["…ok. C'est fait.", "Tu me fais peur, là."]); } },
+    { label: "Supprime-le. Tout de suite. Je t'expliquerai.", when: () => cl('D1') || cl('D5') || has('readPrive'), then() { flag('jadeDeletedLumen'); Msg.receive('jade', ["…ok. C'est fait.", "Tu me fais peur, là."]); } },
     { label: "Je ne sais pas encore. Garde-le pour l'instant.", then() { Msg.receive('jade', ["Ok. Mais dis-moi vite."]); } },
   ],
   morel1: [
@@ -26,7 +28,7 @@ const CHOICES = {
   ],
   morel2: [
     { label: "Je ne sais pas où elle est.", then() { Msg.receive('morel', ["Vous mentez mal. Comme elle."]); } },
-    { label: "Vous n'êtes pas policier.", then() { Msg.receive('morel', ["Et vous n'êtes pas sa sœur.", "Nous tenons tous les deux un téléphone qui ne nous appartient pas. Réfléchissez à qui vous voulez aider."]); } },
+    { label: "Vous n'êtes pas policier.", when: () => cl('M2') || cl('M3') || cl('M4'), then() { Msg.receive('morel', ["Et vous n'êtes pas sa sœur.", "Nous tenons tous les deux un téléphone qui ne nous appartient pas. Réfléchissez à qui vous voulez aider."]); } },
   ],
 };
 
@@ -146,7 +148,7 @@ const TOPICS = {
       reply: ["Un inspecteur ??", "Les flics m'ont dit qu'ils ne cherchaient PAS Nora.", "Attends. J'appelle le commissariat."], then: () => flag('toldJadeMorel') },
     { id: 'j_journalist', when: () => cl('P10'), label: "Nora était en contact avec une journaliste. Elle préparait quelque chose contre Lumen.",
       reply: ["Une journaliste ?!", "Contre SA boîte ? Elle adorait Lumen. Elle en parlait comme de son bébé.", "Il a dû se passer quelque chose de grave."] },
-    { id: 'j_lea', when: () => cl('P5') || cl('P6'), label: "Une femme a été agressée par son ex. Il l'a retrouvée grâce aux données de Lumen.",
+    { id: 'j_lea', when: () => cl('P5'), label: "Une femme a été agressée par son ex. Il l'a retrouvée grâce aux données de Lumen.",
       reply: ["…", "C'est pour ça qu'elle ne dormait plus.", "Elle a dû se sentir responsable. Elle se sent toujours responsable de tout."] },
     { id: 'j_lumen', when: () => (cl('D1') || cl('D5')) && !has('jadeDeletedLumen'), label: "Supprime Lumen de ton téléphone. Tout de suite. Je t'expliquerai.",
       reply: ["…ok.", "C'est fait. Désinstallée.", "Tu me fais peur, là."], then: () => { flag('jadeDeletedLumen'); delete S.choices.jade; save(); } },
@@ -162,15 +164,15 @@ const TOPICS = {
   morel: [
     { id: 'm_argos', when: () => cl('M3') || cl('M4'), label: "Vous travaillez pour Argos Conseil. Pas pour la police.",
       reply: ["La police, Argos… on veut tous la même chose : qu'elle rentre saine et sauve.", "Vous allez m'aider, oui ou non ?"] },
-    { id: 'm_car', when: () => cl('M5'), label: "C'est vous, dans la voiture, en bas de chez elle. Trois soirs de suite.",
+    { id: 'm_car', when: () => cl('M5') && (cl('M4') || cl('M6')), label: "C'est vous, dans la voiture, en bas de chez elle. Trois soirs de suite.",
       reply: ["Je fais mon travail.", "Discrètement, d'habitude. Elle a de bons yeux."] },
-    { id: 'm_paid', when: () => cl('M4') || cl('M10'), label: "Combien Bastien Leroy vous paie pour la retrouver ?",
+    { id: 'm_paid', when: () => cl('M4'), label: "Combien Bastien Leroy vous paie pour la retrouver ?",
       reply: ["Assez pour que je la retrouve.", "Avec ou sans vous."] },
     { id: 'm_bait', when: () => nbLieu() >= 2 && !has('baitMorel'), label: "Elle est à Marseille. Chez une amie.",
       reply: ["Marseille. Bien. Merci."], then: () => { flag('baitMorel'); later(45000, () => { Sound.fx.glitch(); Msg.receive('morel', ["Joli essai.", "Son téléphone n'a jamais quitté Lyon. Et ses dernières recherches parlent de bateaux, pas de calanques.", "Ne me prenez plus pour un idiot."]); }); } },
   ],
   theo: [
-    { id: 't_api', when: () => has('lumenDev'), label: "C'est toi qui as codé l'API Retrouver ?",
+    { id: 't_api', when: () => cl('P4'), label: "C'est toi qui as codé l'API Retrouver ?",
       reply: ["Oui.", "On m'a dit que c'était pour les familles. Pour retrouver des personnes âgées perdues, des ados en fugue.", "J'ai voulu y croire. Je témoignerai, si elle a besoin. Dis-le-lui."], then: () => flag('theoWitness') },
     { id: 't_jade', when: () => cl('D5') && !has('jadeDeletedLumen'), label: "Tu peux bloquer la requête 5103 sur Jade ?",
       reply: ["Pas sans qu'ils le voient.", "Le seul moyen, c'est qu'elle supprime l'appli elle-même. Dis-lui. Pas par écrit si tu peux."] },
@@ -180,7 +182,7 @@ const TOPICS = {
   maman: [
     { id: 'ma_ok', when: () => cl('L1') || cl('D2'), label: "Je crois qu'elle est partie d'elle-même, et qu'elle va bien.",
       reply: ["Merci.", "Merci, merci.", "Dis-lui que je ne lui en veux pas. Qu'elle revienne quand elle pourra. Je garde son assiette."] },
-    { id: 'ma_house', when: () => cl('L4') || cl('L10'), label: "Elle parlait souvent de la maison de sa grand-mère ?",
+    { id: 'ma_house', when: () => cl('L4'), label: "Elle parlait souvent de la maison de sa grand-mère ?",
       reply: ["Tout le temps.", "Elle disait que c'était le seul endroit au monde où son téléphone ne servait à rien.", "Pourquoi ?"] },
   ],
   quiches: [

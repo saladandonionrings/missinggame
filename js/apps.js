@@ -71,8 +71,9 @@ APPS.messages = {
     const comp = $('.composer', v);
     const renderComp = () => {
       const set = CHOICES[S.choices[tid]];
-      if (set) {
-        comp.innerHTML = `<div class="chs"><div class="lbl">Répondre</div>${set.map((o, i) => `<button data-i="${i}">${esc(o.label)}</button>`).join('')}</div>`;
+      const vis = set ? set.map((o, i) => [o, i]).filter(([o]) => !o.when || o.when()) : [];
+      if (vis.length) {
+        comp.innerHTML = `<div class="chs"><div class="lbl">Répondre</div>${vis.map(([o, i]) => `<button data-i="${i}">${esc(o.label)}</button>`).join('')}</div>`;
         comp.onclick = e => { const b = e.target.closest('button'); if (b) Msg.choose(tid, +b.dataset.i); };
       } else if (!T.sms && !T.deleted && Topics.list(tid).length) {
         const ts = Topics.list(tid);
