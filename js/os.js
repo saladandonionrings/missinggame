@@ -257,6 +257,7 @@ const OS = {
 
   /* ============ notifications ============ */
   notify({ app, title, body, sound = 'notif', onTap = null }) {
+    this.lastNotifAt = Date.now();
     if (sound && Sound.fx[sound]) Sound.fx[sound]();
     if (this.locked) { this.lockNotif({ app, title, body }); return; }
     const box = $('#banners');
@@ -352,7 +353,7 @@ const Msg = {
       pushMsg(tid, { f: m.f, t: line });
       const open = Msg.openThread === tid && OS.app === 'messages';
       if (open) Sound.fx.message();
-      else OS.notify({ app: 'messages', title: notifyTitle || STORY.threads[tid].name, body: line, sound: 'message', onTap: () => OS.open('messages', null, { thread: tid }) });
+      else if (raw === lines[0]) OS.notify({ app: 'messages', title: notifyTitle || STORY.threads[tid].name, body: line, sound: 'message', onTap: () => OS.open('messages', null, { thread: tid }) });
       await sleep(300);
     }
   },

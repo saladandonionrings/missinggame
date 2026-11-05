@@ -206,7 +206,7 @@ const EVENTS = [
   { id: 'jadeWelcome', after: 'unlocked', delay: 3, run() {
     Msg.receive('jade', ["T'as réussi ?! 😭", "Ok. Fouille tout. Messages, photos, notes, mails… je m'en fiche de sa vie privée, je veux juste savoir qu'elle va bien.", "La police dit qu'elle est majeure. Qu'elle est « sûrement partie de son plein gré ».", "Moi j'y crois pas. Elle serait jamais partie sans me prévenir. Et elle aurait JAMAIS laissé son téléphone.", "Si t'es bloqué·e, appelle-moi. Je réponds toujours 📞"]).then(() => Msg.setChoices('jade', 'jade0'));
   } },
-  { id: 'lumenPing1', after: 'unlocked', delay: 50, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "Nora, cela fait 4 jours que vous n'avez partagé aucun trajet. Tout va bien ? 💜", onTap: () => OS.open('lumen') }); } },
+  { id: 'lumenPing1', ambient: true, after: 'unlocked', delay: 50, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "Nora, cela fait 4 jours que vous n'avez partagé aucun trajet. Tout va bien ? 💜", onTap: () => OS.open('lumen') }); } },
   { id: 'mamanCall', after: 'unlocked', delay: 110, call: true, run() {
     Call.incoming({ name: 'Maman', ini: 'M', col: '#ff6b9a', script: [
       { who: 'maman', n: 'Maman', t: "Nora ?! Nora, c'est toi ?" },
@@ -217,7 +217,7 @@ const EVENTS = [
       { who: 'maman', n: 'Maman', t: "Trouvez-la. S'il vous plaît." },
     ], onMiss: () => setTimeout(() => addVoicemail('vm_maman2'), 4000) });
   } },
-  { id: 'fluxMemory', after: 'unlocked', delay: 190, run() { OS.notify({ app: 'flux', title: 'Flux', body: "Souvenir 🌊 Il y a 7 ans, vous étiez au bout du monde. Revivez ce moment !", onTap: () => OS.open('flux') }); } },
+  { id: 'fluxMemory', ambient: true, after: 'unlocked', delay: 190, run() { OS.notify({ app: 'flux', title: 'Flux', body: "Souvenir 🌊 Il y a 7 ans, vous étiez au bout du monde. Revivez ce moment !", onTap: () => OS.open('flux') }); } },
   { id: 'morelCall', after: 'mailOpen', delay: 28, call: true, run() {
     ensureThread('morel');
     Call.incoming({ name: '+33 6 39 98 71 44', ini: '?', col: '#48484a', script: [
@@ -234,13 +234,12 @@ const EVENTS = [
     ], onMiss: () => setTimeout(() => addVoicemail('vm_morel'), 3500) });
   } },
   { id: 'morelSms', after: 'ev_morelCall', delay: 8, run() { Msg.receive('morel', ["Inspecteur Morel. Voici mon numéro.", "Le moindre lieu, écrivez-le-moi. Le temps joue contre elle."]).then(() => Msg.setChoices('morel', 'morel1')); } },
-  { id: 'lumenPing2', after: 'ev_morelCall', delay: 45, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "📍 Votre position a été partagée avec 1 partenaire de confiance." }); } },
+  { id: 'lumenPing2', ambient: true, after: 'ev_morelCall', delay: 45, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "📍 Votre position a été partagée avec 1 partenaire de confiance." }); } },
   { id: 'jadeCheck', after: 'ev_morelCall', delay: 60, cond: () => !has('toldJadeMorel'), run() { Msg.receive('jade', ["Du nouveau de ton côté ?", "Quelqu'un t'a contacté·e sur son téléphone ?"]).then(() => Msg.setChoices('jade', 'jadeCheck')); } },
   { id: 'jadeCheck2', after: 'lieJade', delay: 120, cond: () => !has('toldJadeMorel'), run() { Msg.receive('jade', ["Maman vient de m'appeler.", "Un homme l'a appelée chez elle. Il s'est présenté comme policier et voulait savoir si Nora avait « une maison de famille ».", "T'es sûr·e que personne ne t'a appelé·e ?"]).then(() => Msg.setChoices('jade', 'jadeCheck')); } },
   { id: 'jadePolice', after: 'toldJadeMorel', delay: 25, run() { Msg.receive('jade', ["J'ai appelé le commissariat.", "AUCUNE enquête n'est ouverte. Et il n'y a pas d'inspecteur Morel. Personne de ce nom.", "Ce type n'est pas flic."]).then(() => { clue('M2'); Msg.setChoices('jade', 'jadePolice'); }); } },
   { id: 'theoWarn', after: 'lumenDev', delay: 18, run() { Msg.receive('theo', ["C'est toi qui as le tel de Nora ? Jade m'a dit.", "Je viens de recevoir une alerte : quelqu'un s'est connecté au mode dev depuis son appareil.", "Si tu as vu la 5102, tu sais qu'ils suivent ce téléphone. En ce moment.", "Et la 5103… c'est Jade.", has('jadeDeletedLumen') ? "Elle a supprimé l'appli, j'ai vu la requête passer en échec. Tant mieux." : "Elle a Lumen. Elle partage sa position. Tu comprends ?", "Je peux rien faire de plus. Ils lisent mes messages pro. Efface cette conversation."]); } },
   { id: 'morelKnows', after: 'vaultOpen', delay: 12, run() { Sound.fx.glitch(); $('#screen').classList.add('glitch'); setTimeout(() => $('#screen').classList.remove('glitch'), 1100); ensureThread('morel'); Msg.receive('morel', ["Vous venez d'ouvrir un dossier chiffré.", "Ces fichiers sont des pièces sensibles. Ne les transférez à personne."]).then(() => clue('M7')); } },
-  { id: 'lumenPing3', after: 'vaultOpen', delay: 70, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "💜 Nora, vous semblez stressée. Découvrez Lumen Sérénité, notre programme premium." }); } },
   { id: 'masked', after: 'ombreOpen', delay: 22, call: true, cond: () => has('ombreRead'), run() {
     Call.incoming({ name: 'Numéro masqué', ini: '?', col: '#1c1c1e', masked: true, script: [
       { sfx: 'sea' }, { wait: 1500 }, { fx: '(personne ne parle)' }, { fn: () => clue('L11') }, { gull: true }, { wait: 1200 }, { foghorn: true }, { wait: 1800 }, { breath: true }, { wait: 800 }, { fx: '(on raccroche)' },
@@ -248,40 +247,31 @@ const EVENTS = [
   } },
   { id: 'morelThreat', after: 'ombreOpen', delay: 55, cond: () => has('ev_morelCall'), run() { Msg.receive('morel', ["Je sais que vous êtes proche.", "Le téléphone que vous tenez se trouve rue d'Austerlitz, Lyon 4e. Je pourrais passer le chercher.", "Ou vous pouvez simplement me donner le lieu."]).then(() => Msg.setChoices('morel', 'morel2')); } },
   { id: 'jadeFinal', after: 'ombreOpen', delay: 95, run() { Msg.receive('jade', [has('ev_theoWarn') ? "Théo m'a appelée. Il dit que tu as trouvé des trucs. Il avait une voix bizarre." : "Tu ne m'as rien écrit depuis un moment. Je sens que tu as trouvé des trucs.", "Quand tu es prêt·e, ouvre ton carnet. Et dis-moi tout.", "Je dois savoir."]); } },
-  { id: 'mailSecu', after: 'mailOpen', delay: 70, run() { addMail('secu'); } },
-  { id: 'fluxStalk', after: 'readArgos', delay: 25, run() { OS.notify({ app: 'flux', title: 'Flux', body: "bastien.leroy a consulté votre profil 6 fois aujourd'hui.", onTap: () => OS.open('flux') }); } },
-  { id: 'nexaPromo', after: 'readDatanexa', delay: 60, run() { addMail('nexa'); } },
+  { id: 'mailSecu', ambient: true, after: 'mailOpen', delay: 70, run() { addMail('secu'); } },
+  { id: 'fluxStalk', ambient: true, after: 'readArgos', delay: 25, run() { OS.notify({ app: 'flux', title: 'Flux', body: "bastien.leroy a consulté votre profil 6 fois aujourd'hui.", onTap: () => OS.open('flux') }); } },
+  { id: 'nexaPromo', ambient: true, after: 'readDatanexa', delay: 60, run() { addMail('nexa'); } },
   { id: 'jadeLumen', after: 'noteOpen', delay: 30, cond: () => !has('jadeDeletedLumen'), run() { Msg.receive('jade', ["Je relis tous ses messages et je pense à un truc.", "Elle m'a demandé la semaine dernière si j'avais encore Lumen sur mon téléphone. Pourquoi elle m'aurait demandé ça ?", "Je l'ai toujours. Je partage ma position avec elle et maman."]).then(() => Msg.setChoices('jade', 'jadeLumen')); } },
-  { id: 'calRemind', after: 'unlocked', delay: 330, run() { OS.notify({ app: 'calendar', title: 'Calendrier', body: "Rappel : 🎂 Anniversaire Jade dans 8 jours — NE PAS RATER", onTap: () => OS.open('calendar') }); } },
-  { id: 'bankIdle', after: 'unlocked', delay: 260, run() { OS.notify({ app: 'bank', title: 'Banque Azur', body: "Votre carte n'a pas été utilisée depuis 4 jours. Pour votre sécurité, nous surveillons votre compte. 💚" }); } },
-  { id: 'adHike', after: 'bankOpen', delay: 20, run() { OS.notify({ app: 'flux', title: 'Flux · Sponsorisé', body: "📍 Vous étiez près de Décathlon récemment. -20 % sur la randonnée côtière ! 🌊" }); } },
-  { id: 'lumenAlert', after: 'lumenDev', delay: 50, run() { Sound.fx.glitch(); OS.notify({ app: 'lumen', title: 'Lumen — Sécurité', body: "⚠️ Activité inhabituelle détectée sur votre compte. Un conseiller va vous contacter.", sound: null }); } },
-  { id: 'meteoAlert', after: 'vaultOpen', delay: 35, run() { OS.notify({ app: 'weather', title: 'Météo · Ouessant', body: "Vigilance orange vent. Traversées vers les îles du Ponant annulées demain matin.", onTap: () => OS.open('weather') }); } },
-  { id: 'photoMemory', after: 'ev_masked', delay: 30, run() { OS.notify({ app: 'photos', title: 'Photos', body: "Nouveau souvenir : « Mamie » — 1 photo, 1 lieu.", onTap: () => OS.open('photos', null, { photo: 'ouessant' }) }); } },
-  { id: 'jadeMail', after: 'lumenOpen', delay: 140, run() { addMail('jadefw'); } },
-  { id: 'healthNudge', after: 'unlocked', delay: 400, run() { OS.notify({ app: 'health', title: 'Santé', body: "Vous n'avez fait aucun pas depuis 4 jours. Bougez un peu ! 🚶‍♀️", onTap: () => OS.open('health') }); } },
+  { id: 'calRemind', ambient: true, after: 'unlocked', delay: 330, run() { OS.notify({ app: 'calendar', title: 'Calendrier', body: "Rappel : 🎂 Anniversaire Jade dans 8 jours — NE PAS RATER", onTap: () => OS.open('calendar') }); } },
+  { id: 'lumenAlert', ambient: true, after: 'lumenDev', delay: 50, run() { Sound.fx.glitch(); OS.notify({ app: 'lumen', title: 'Lumen — Sécurité', body: "⚠️ Activité inhabituelle détectée sur votre compte. Un conseiller va vous contacter.", sound: null }); } },
+  { id: 'meteoAlert', ambient: true, after: 'vaultOpen', delay: 35, run() { OS.notify({ app: 'weather', title: 'Météo · Ouessant', body: "Vigilance orange vent. Traversées vers les îles du Ponant annulées demain matin.", onTap: () => OS.open('weather') }); } },
+  { id: 'photoMemory', ambient: true, after: 'ev_masked', delay: 30, run() { OS.notify({ app: 'photos', title: 'Photos', body: "Nouveau souvenir : « Mamie » — 1 photo, 1 lieu.", onTap: () => OS.open('photos', null, { photo: 'ouessant' }) }); } },
+  { id: 'jadeMail', ambient: true, after: 'lumenOpen', delay: 140, run() { addMail('jadefw'); } },
+  { id: 'healthNudge', ambient: true, after: 'unlocked', delay: 400, run() { OS.notify({ app: 'health', title: 'Santé', body: "Vous n'avez fait aucun pas depuis 4 jours. Bougez un peu ! 🚶‍♀️", onTap: () => OS.open('health') }); } },
   { id: 'bastienCall', after: 'readBastienDel', delay: 22, call: true, cond: () => !has('bastienTalked'), run() {
     const c = CALLS.bastien();
     Call.incoming({ name: 'NE PAS RÉPONDRE', ini: '⛔', col: '#ff453a', script: c.steps, onMiss: () => setTimeout(() => addVoicemail('vm_bastien'), 3500) });
   } },
-  { id: 'quichesWorry', after: 'unlocked', delay: 230, run() { Msg.receive('quiches', [{ f: 'Inès', t: "Jade dit que quelqu'un a le téléphone de Nora ??" }, { f: 'Paul', t: "si tu lis ça, qui que tu sois : dis-lui qu'on l'aime. et qu'on lui garde une patate 🥔" }], { notifyTitle: 'Les Quiches 🥧' }); } },
-  { id: 'jadeStory', after: 'unlocked', delay: 290, run() { OS.notify({ app: 'flux', title: 'Flux', body: "jade.vlt a publié une story : « AVIS DE RECHERCHE — Nora, 27 ans. Partagez 🙏 »", onTap: () => OS.open('flux') }); } },
-  { id: 'contrepointNews', after: 'mailOpen', delay: 160, run() { addMail('news'); } },
-  { id: 'adminCode', after: 'lumenDev', delay: 85, run() { Msg.receive('lumensms', ["LUMEN : Votre code de connexion administrateur est 771204. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message."], { notifyTitle: 'LUMEN' }); } },
-  { id: 'lumenNight', after: 'heardDeletedMemo', delay: 30, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "💜 Vous utilisez votre téléphone tard le soir. Lumen Sérénité vous aide à mieux dormir. Essai gratuit !" }); } },
+  { id: 'quichesWorry', ambient: true, after: 'unlocked', delay: 230, run() { Msg.receive('quiches', [{ f: 'Inès', t: "Jade dit que quelqu'un a le téléphone de Nora ??" }, { f: 'Paul', t: "si tu lis ça, qui que tu sois : dis-lui qu'on l'aime. et qu'on lui garde une patate 🥔" }], { notifyTitle: 'Les Quiches 🥧' }); } },
   { id: 'morelDeleted', after: 'readBastienDel', delay: 75, cond: () => has('ev_morelCall'), run() { ensureThread('morel'); Msg.receive('morel', ["Je vois que vous lisez des conversations supprimées.", "Certaines choses sont effacées pour de bonnes raisons."]); } },
-  { id: 'cloudMail', after: 'noteOpen', delay: 45, run() { addMail('cloud'); } },
-  { id: 'avocateMail', after: 'ombreOpen', delay: 40, run() { addMail('avocate'); } },
-  { id: 'bastienMail', after: 'readBastienDel', delay: 110, run() { addMail('bastien2'); } },
-  { id: 'juridique', after: 'lumenDev', delay: 120, run() { addMail('rhrappel'); } },
+  { id: 'cloudMail', ambient: true, after: 'noteOpen', delay: 45, run() { addMail('cloud'); } },
+  { id: 'avocateMail', ambient: true, after: 'ombreOpen', delay: 40, run() { addMail('avocate'); } },
+  { id: 'bastienMail', ambient: true, after: 'readBastienDel', delay: 110, run() { addMail('bastien2'); } },
+  { id: 'juridique', ambient: true, after: 'lumenDev', delay: 120, run() { addMail('rhrappel'); } },
   { id: 'colixSms', after: 'noteOpen', delay: 150, run() { Msg.receive('colix', ["COLIX : Votre colis « Carte IGN 0417 — Île d'Ouessant (1:25 000) » commandé le 26/10 vous attend en point relais depuis 6 jours. Sans retrait sous 48 h, il sera retourné."], { notifyTitle: 'Colix' }).then(() => clue('L14')); } },
-  { id: 'lumenIsolated', after: 'unlocked', delay: 560, run() { OS.notify({ app: 'lumen', title: 'Lumen', body: "💜 Vous n'êtes pas sortie de chez vous depuis 4 jours. Souhaitez-vous qu'on prévienne vos proches ?" }); } },
-  { id: 'fluxWork', after: 'unlocked', delay: 380, run() { OS.notify({ app: 'flux', title: 'Flux · Souvenir', body: "Il y a 3 ans, vous commenciez chez Lumen 🚀 « Plus aucune femme ne rentrera seule »", onTap: () => OS.open('photos', null, { photo: 'bureau' }) }); } },
   { id: 'morelJadeGone', after: 'jadeDeletedLumen', delay: 35, cond: () => has('ev_morelCall'), run() { Sound.fx.glitch(); ensureThread('morel'); Msg.receive('morel', ["La sœur vient de supprimer son application.", "C'était votre idée ? Dommage. Elle était si facile à suivre."]); } },
-  { id: 'theoAfterDel', after: 'jadeDeletedLumen', delay: 70, cond: () => has('ev_theoWarn'), run() { Msg.receive('theo', ["La 5103 vient de passer en échec. Jade a supprimé l'appli ?", "Bien joué. Vraiment."]); } },
+  { id: 'theoAfterDel', ambient: true, after: 'jadeDeletedLumen', delay: 70, cond: () => has('ev_theoWarn'), run() { Msg.receive('theo', ["La 5103 vient de passer en échec. Jade a supprimé l'appli ?", "Bien joué. Vraiment."]); } },
   { id: 'jadeAfterMorel', after: 'toldJadeMorel', delay: 90, run() { Msg.receive('jade', ["J'ai fait une recherche sur « Franck Morel ».", "Un Franck Morel a un profil pro : « ancien gendarme, enquêtes privées, cabinet Argos Conseil ».", "Ancien. Gendarme. Ce mec n'est plus rien du tout."]); } },
-  { id: 'meteoFerry', after: 'ombreRead', delay: 100, run() { OS.notify({ app: 'weather', title: 'Météo · Ouessant', body: "La tempête se calme demain. Reprise des traversées prévue à 9 h 45.", onTap: () => OS.open('weather') }); } },
-  { id: 'battery', after: 'unlocked', delay: 480, run() { OS.notify({ app: 'settings', title: 'Batterie faible', body: `${S.battery} % de batterie restante. Le téléphone de Nora n'a pas été chargé depuis 4 jours.` }); } },
+  { id: 'battery', ambient: true, after: 'unlocked', delay: 480, run() { OS.notify({ app: 'settings', title: 'Batterie faible', body: `${S.battery} % de batterie restante. Le téléphone de Nora n'a pas été chargé depuis 4 jours.` }); } },
 ];
 function nudge() {
   // 6 minutes sans nouvel indice : Jade relance avec une piste adaptée (4 fois au plus).
@@ -302,6 +292,8 @@ function tick() {
     if (Date.now() - S.flags[e.after] < e.delay * 1000) continue;
     if (e.cond && !e.cond()) continue;
     if (e.call && (OS.inCall || OS.overlayOn)) continue;
+    // les notifications d'ambiance sont espacées : jamais deux coup sur coup
+    if (e.ambient && (Date.now() - (OS.lastNotifAt || 0) < 90000 || OS.inCall)) continue;
     flag('ev_' + e.id);
     try { e.run(); } catch (err) { console.error(err); }
     break;
