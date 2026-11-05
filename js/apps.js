@@ -282,7 +282,7 @@ APPS.mail = {
     nav.push(v);
     const pw = $('.pw', v);
     const tryPw = () => {
-      if (norm(pw.value) === 'biscotte') return this.ok(nav);
+      if (norm(pw.value) === 'luna') return this.ok(nav);
       Sound.fx.error(); pw.classList.add('err'); setTimeout(() => pw.classList.remove('err'), 450);
       S.mailFails = (S.mailFails || 0) + 1; save();
       $('.errtxt', v).textContent = S.mailFails >= 2 ? 'Mot de passe incorrect. Essayez « Mot de passe oublié ? »' : 'Mot de passe incorrect';
@@ -294,7 +294,7 @@ APPS.mail = {
       nav.push(q);
       const a = $('.ans', q);
       const go = () => {
-        if (norm(a.value) === 'biscotte') return this.ok(nav);
+        if (norm(a.value) === 'luna') return this.ok(nav);
         Sound.fx.error(); a.classList.add('err'); setTimeout(() => a.classList.remove('err'), 450);
         $('.errtxt', q).textContent = norm(a.value) === 'kafka' ? "Kafka n'était pas son premier animal…" : 'Réponse incorrecte';
       };
@@ -657,7 +657,7 @@ APPS.flux = {
     { art: 'kafka', date: '22 sept.', cap: '3 ans de mépris absolu 🐱🎂 #kafka', likes: 540, com: [['jade.vlt', 'le roi 👑']] },
     { art: 'party', date: '8 juin', cap: "Lumen a 3 ans aujourd'hui 💜 Lancée le 08/06/2023 avec une idée simple : plus aucune femme ne rentrera seule. Fière de cette équipe.", likes: 1290, com: [['bastien.leroy', 'La meilleure data scientist de France 🚀'], ['theo.mrch', '🥂']] },
     { art: 'selfie', date: '9 août 2025', cap: 'Ma sœur, mon soleil ☀️', likes: 302, com: [['jade.vlt', 'arrête je vais pleurer']] },
-    { art: 'biscotte', date: '2 mai 2021', cap: '#tbt RIP Biscotte, hamster légendaire et premier amour de ma vie 🐹', likes: 98, com: [['jade.vlt', 'BISCOTTE 😭😭']] },
+    { art: 'biscotte', date: '2 mai 2021', cap: '#tbt Luna 🐾 minuscule chaton tigré, les yeux couleur lagon. Mon tout premier amour.', likes: 98, com: [['jade.vlt', 'LUNA 😭😭 elle tenait dans une main'], ['maman_sylvie', 'Elle dormait dans ton cartable ❤️']] },
     { art: 'ouessant', date: '14 août 2019', cap: 'Le bout du monde, avec la meilleure des mamies 🌊💙', likes: 87, com: [['maman_sylvie', 'Mes deux amours ❤️']] },
   ],
   open(el) {
@@ -1032,7 +1032,7 @@ const Hints = {
       [!has('mailOpen'), [
         "Ses mails pourraient tout expliquer. Le mot de passe… il y a souvent une question secrète.",
         "La question secrète porte sur son tout premier animal. Ce n'est pas Kafka. Regarde ses vieilles photos.",
-        "Dans Photos, il y a un scan de 2004 : « Moi & Biscotte ». Dans Mail, « Mot de passe oublié ? » → Biscotte.",
+        "Dans Photos, il y a un scan de 2004 : « Moi & Luna ». Dans Mail, « Mot de passe oublié ? » → Luna.",
       ]],
       [!has('lumenDev'), [
         "Lumen, l'appli de Nora, cache quelque chose. Théo en parlait dans leurs messages.",
@@ -1073,7 +1073,7 @@ const Hints = {
     return st[1][Math.min(lv, st[1].length - 1)];
   },
   jadeLine() {
-    if (!has('mailOpen')) return "Ses mails, c'est là qu'il y a tout son boulot. Pour le mot de passe, il y a une question secrète, non ? Notre tout premier animal… un hamster. Regarde ses vieilles photos.";
+    if (!has('mailOpen')) return "Ses mails, c'est là qu'il y a tout son boulot. Pour le mot de passe, il y a une question secrète, non ? Notre tout premier animal… un chaton tout gris, minuscule. Regarde ses vieilles photos.";
     if (!has('lumenDev')) return "Théo, son collègue, lui parlait d'un menu caché dans l'appli Lumen. Relis leurs messages.";
     if (!has('noteOpen')) return "Elle avait une note verrouillée. L'indice parlait de Kafka et de ce qu'il déteste. Il déteste tout, ce chat… mais surtout un truc qui fait du bruit.";
     if (!has('vaultOpen')) return "Un coffre dans la calculatrice ?! Elle a toujours été tordue. Il te faut un nombre. Il doit être dans ses mails.";

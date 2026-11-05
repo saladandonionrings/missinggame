@@ -371,7 +371,7 @@ STORY.photos = [
   { id: 'party', art: 'party', title: 'Ven. 13 mars 2026', time: '22:47', place: 'Lumen SAS — Lyon 2e', coords: '45.7520° N, 4.8270° E', cap: '1 MILLION 💜 on l\'a fait', album: 'recent' },
   { id: 'bureau', art: 'bureau', title: 'Lun. 3 juil. 2023', time: '09:12', place: 'Lumen SAS — Lyon 2e', coords: '45.7520° N, 4.8270° E', cap: 'Jour 1 chez Lumen 🚀 « Plus aucune femme ne rentrera seule »', album: 'recent' },
   { id: 'ouessant', art: 'ouessant', title: 'Mer. 14 août 2019', time: '21:34', place: 'Lampaul, Île d\'Ouessant', coords: '48.4592° N, 5.1305° W', cap: 'Avec mamie, au pied du phare. Le bout du monde.', clue: 'L4', album: 'recent', fav: true },
-  { id: 'biscotte', art: 'biscotte', title: '2004 (scan)', time: '', place: 'Inconnu', coords: '—', cap: 'Moi & Biscotte, mon tout premier animal 🐹', album: 'recent' },
+  { id: 'biscotte', art: 'biscotte', title: '2004 (scan)', time: '', place: 'Inconnu', coords: '—', cap: 'Moi & Luna, mon tout premier animal 🐾', album: 'recent' },
   { id: 'voiture', art: 'voiture', title: 'Jeu. 29 oct. 2026', time: '22:14', place: 'Lyon 4e — Croix-Rousse', coords: '45.7745° N, 4.8320° E', cap: 'Il est encore là. Trois soirs de suite.', clue: 'M5', album: 'deleted' },
   { id: 'requete', art: 'requete', title: 'Lun. 26 oct. 2026', time: '23:58', place: 'Lyon 4e — Croix-Rousse', coords: '45.7745° N, 4.8320° E', cap: 'Capture d\'écran', clue: 'P5', album: 'deleted' },
 ];

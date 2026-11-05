@@ -54,7 +54,7 @@ Si toi ou quelqu'un de ton entourage êtes concernés : **3919** (Violences Femm
 | Verrou | Code | Où le trouver |
 |---|---|---|
 | Téléphone | `2209` | Fond d'écran (guirlande) + message de Jade : l'anniversaire de Kafka |
-| Mail | `Biscotte` | « Mot de passe oublié » → premier animal → photo scannée de 2004 / post Flux |
+| Mail | `Luna` | « Mot de passe oublié » → premier animal → photo scannée de 2004 / post Flux |
 | Lumen (mode dev) | 7 appuis sur la version, PIN `0806` | Messages de Théo + post Flux du lancement (08/06/2023) |
 | Note « Si on me cherche » | `aspirateur` | Photo « Kafka vs son ennemi juré » |
 | Coffre (Calculatrice) | `2847113` puis `=` | Mail DataNexa |
