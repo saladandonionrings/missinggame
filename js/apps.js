@@ -130,6 +130,7 @@ APPS.phone = {
     $$('.av', v).forEach(a => { a.style.width = '40px'; a.style.height = '40px'; a.style.fontSize = '15px'; a.style.margin = '6px 0'; });
   },
   rec(nav) {
+    flag('sawRecents');
     const all = S.recents.map(r => ({ name: r.name, type: r.type, when: r.when, sub: r.type === 'miss' ? 'appel manqué' : r.type === 'out' ? 'sortant' : 'entrant', num: r.num })).concat(STORY.baseRecents);
     const v = makeView(nav, { title: 'Récents', large: true, body: `<div class="seg"><button class="on">Tous</button><button>Manqués</button></div><div class="recs"></div>` });
     nav.push(v);
@@ -426,7 +427,7 @@ APPS.maps = {
       const k = r.dataset.k;
       if (k === 'route') return route();
       if (k === 'deleted') { OS.toastInfo('❔', 'Favori supprimé', 'Nora a effacé ce lieu le 30 oct. à 23:58, la veille de son départ.'); return; }
-      if (k === 'press') { OS.toastInfo('📰', 'Le Contrepoint', 'Une rédaction parisienne. Pourquoi Nora cherchait-elle son adresse ?'); clue('P10'); return; }
+      if (k === 'press') { OS.toastInfo('📰', 'Le Contrepoint', 'Un journal d\'investigation parisien. Pourquoi Nora cherchait-elle son adresse ?'); return; }
       if (PLACES[k]) place(k);
     };
   },
@@ -949,7 +950,7 @@ APPS.carnet = {
     b.innerHTML = `<div class="cn-small">Conclusion</div>
       <div class="cn-q"><label>1. Où est Nora ?</label><input type="text" class="q1" placeholder="un lieu…" autocomplete="off"></div>
       <div class="cn-q"><label>2. Pourquoi est-elle partie ?</label>${opts2.map((o, i) => `<div class="cn-opt" data-q="2" data-i="${i}"><i></i>${esc(o)}</div>`).join('')}</div>
-      <div class="cn-q"><label>3. Qui est « l'inspecteur Morel » ?</label>${opts3.map((o, i) => `<div class="cn-opt" data-q="3" data-i="${i}"><i></i>${esc(o)}</div>`).join('')}</div>
+      <div class="cn-q"><label>3. ${knows.morel() ? "Qui est « l'inspecteur Morel » ?" : 'Qui d\'autre la cherche ?'}</label>${opts3.map((o, i) => `<div class="cn-opt" data-q="3" data-i="${i}"><i></i>${esc(o)}</div>`).join('')}</div>
       <div class="cn-res"></div>
       <button class="cn-btn val">Valider mes conclusions</button><button class="cn-btn sec back">← revenir au carnet</button><div style="height:30px"></div>`;
     const ans = { 2: null, 3: null };
@@ -1002,7 +1003,7 @@ APPS.health = {
           <svg viewBox="0 0 300 140">${[60, 90, 120].map(y => `<path d="M0 ${y} H300" stroke="#2c2c2e"/>`).join('')}<path d="${path}" stroke="#ff2d55" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="${10 + 9 * 16.5}" cy="${120 - 81 * 0.95}" r="5" fill="#ff2d55" stroke="#fff" stroke-width="2"/>
           <text x="${10 + 9 * 16.5 + 9}" y="${120 - 81 * 0.95 + 4}" font-size="11" fill="#fff" font-family="Inter,Arial">22:14</text><text x="4" y="136" font-size="10" fill="#8e8e93" font-family="Inter,Arial">20:00</text><text x="296" y="136" font-size="10" fill="#8e8e93" text-anchor="end" font-family="Inter,Arial">00:00</text></svg>
           <div class="hnote">Fréquence au repos : 62 BPM. Aucune activité physique détectée pendant le pic. La montre a noté : « Rythme élevé — êtes-vous stressée ? »</div></div>
-          <div class="gfoot" style="margin-top:0">22:14. La même minute que la photo supprimée de la voiture en bas de chez elle.</div>` }));
+          <div class="gfoot" style="margin-top:0">${knows.carPhoto() ? '22:14. La même minute que la photo supprimée de la voiture en bas de chez elle.' : "Qu'est-ce qui a fait monter son cœur à 131, assise chez elle, à 22:14 ?"}</div>` }));
         setTimeout(() => clue('M8'), 1100);
         return;
       }
@@ -1014,7 +1015,7 @@ APPS.health = {
       }
       if (k === 'share2') { OS.toastInfo('≋', 'Flux', "« Nous utilisons votre activité pour vous proposer des contenus adaptés à votre énergie du jour. »"); return; }
       if (k === 'steps') { OS.toastInfo('🔥', 'Sam. 31 oct.', '05:31 réveil · 05:40 palier (3e étage) · 05:52 cuisine · puis 0 pas.'); return; }
-      if (k === 'sleep') { OS.toastInfo('🛏', 'Sommeil fragmenté', "Réveillée 7 fois dans la nuit du 29 au 30. Dernier réveil : 03:12, l'heure de l'appel masqué."); }
+      if (k === 'sleep') { OS.toastInfo('🛏', 'Sommeil fragmenté', "Réveillée 7 fois dans la nuit du 29 au 30. Dernier réveil : 03:12" + (knows.maskedCall() ? ", l'heure de l'appel masqué." : '.')); }
     };
   },
 };

@@ -26,6 +26,12 @@ try { S = Object.assign(freshState(), JSON.parse(localStorage.getItem(SAVE_KEY) 
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
 function flag(k) { if (!S.flags[k]) { S.flags[k] = Date.now(); save(); Bus.emit('flag', k); } }
 const has = k => !!S.flags[k];
+// Ce que le joueur sait déjà : sert à ne jamais dévoiler un élément avant son indice.
+const knows = {
+  morel: () => !!(S.clues.M1 || S.clues.M4),        // il a entendu parler de « Morel »
+  carPhoto: () => !!S.clues.M5,                      // il a vu la photo supprimée de la voiture
+  maskedCall: () => has('sawRecents'),               // il a vu l'appel masqué de 03:12
+};
 
 const Bus = { ev: {}, on(n, f) { (this.ev[n] = this.ev[n] || []).push(f); }, off(n, f) { this.ev[n] = (this.ev[n] || []).filter(x => x !== f); }, emit(n, d) { (this.ev[n] || []).slice().forEach(f => { try { f(d); } catch (e) { console.error(e); } }); } };
 

@@ -34,7 +34,11 @@ const CHOICES = {
 const VOICEMAILS = {
   vm_maman2: { who: 'Maman', date: "aujourd'hui", steps: [{ who: 'maman', n: 'Maman', t: "C'est encore maman. Je sais que ce n'est pas toi qui as le téléphone, Jade m'a dit. Mais j'avais besoin d'entendre ta messagerie. Ta voix. Pardon." }] },
   vm_morel: { who: '+33 6 39 98 71 44', date: "aujourd'hui", clue: 'M1', steps: [{ who: 'morel', n: 'Inspecteur Morel', t: "Bonjour. Inspecteur Franck Morel, police judiciaire. Je sais que vous avez le téléphone de Nora Valette. Elle est peut-être en danger. Rappelez-moi, ou écrivez-moi à ce numéro. Le moindre lieu. Personne d'autre." }] },
-  vm_bastien: { who: 'NE PAS RÉPONDRE', date: "aujourd'hui", clue: 'M4', steps: [{ who: 'bastien', n: 'Bastien Leroy', t: "C'est Bastien Leroy. Je sais que ce n'est pas Nora qui a ce téléphone. Il contient des données qui appartiennent à Lumen. Remettez-le à monsieur Morel. Il saura vous trouver, de toute façon." }] },
+  vm_bastien: { who: 'NE PAS RÉPONDRE', date: "aujourd'hui",
+    get clue() { return knows.morel() ? 'M4' : null; },
+    get steps() { return [{ who: 'bastien', n: 'Bastien Leroy', t: knows.morel()
+      ? "C'est Bastien Leroy. Je sais que ce n'est pas Nora qui a ce téléphone. Il contient des données qui appartiennent à Lumen. Remettez-le à monsieur Morel. Il saura vous trouver, de toute façon."
+      : "C'est Bastien Leroy. Je sais que ce n'est pas Nora qui a ce téléphone. Il contient des données qui appartiennent à Lumen. Quelqu'un passera le chercher. Il saura vous trouver, de toute façon." }]; } },
   vm_masked: { who: 'Numéro masqué', date: "aujourd'hui", clue: 'L11', steps: [{ sfx: 'sea' }, { wait: 1500 }, { fx: "(personne ne parle)" }, { gull: true }, { wait: 1500 }, { foghorn: true }, { wait: 2000 }, { breath: true }, { fx: "(fin du message)" }] },
 };
 function addMail(id) {
@@ -117,8 +121,9 @@ const CALLS = {
       { who: 'bastien', n: '« NE PAS RÉPONDRE »', t: "Nora ? … Nora, c'est toi ?" },
       { wait: 1200 },
       { who: 'bastien', n: '« NE PAS RÉPONDRE »', t: "Qui est à l'appareil ? … Peu importe. Écoutez-moi bien." },
-      { who: 'bastien', n: '« NE PAS RÉPONDRE »', t: "Ce téléphone contient des données qui appartiennent à Lumen. Remettez-le à monsieur Morel, et tout ira bien pour tout le monde. Pour elle aussi." },
-      { fx: '(il raccroche)' }, { fn: () => clue('M4') },
+      ...(knows.morel()
+        ? [{ who: 'bastien', n: '« NE PAS RÉPONDRE »', t: "Ce téléphone contient des données qui appartiennent à Lumen. Remettez-le à monsieur Morel, et tout ira bien pour tout le monde. Pour elle aussi." }, { fx: '(il raccroche)' }, { fn: () => clue('M4') }]
+        : [{ who: 'bastien', n: '« NE PAS RÉPONDRE »', t: "Ce téléphone contient des données qui appartiennent à Lumen. Quelqu'un va venir le récupérer. Donnez-le-lui, et tout ira bien pour tout le monde. Pour elle aussi." }, { fx: '(il raccroche)' }]),
     ] };
   },
 };
@@ -335,7 +340,7 @@ const Main = {
     const b = $('.carnet .vbody'); if (!b) return;
     const canClaire = has('ombreOpen');
     b.innerHTML = `<div class="cn-small">Tu sais.</div>
-      <div class="cn-cat"><h3>Elle est à Ouessant.</h3><div class="cn-clue">Dans la maison de sa grand-mère, au bout du monde. Elle protège des preuves. Un détective payé par Lumen la traque à travers ce téléphone. Et bientôt, à travers celui de Jade.</div></div>
+      <div class="cn-cat"><h3>Elle est à Ouessant.</h3><div class="cn-clue">Dans la maison de sa grand-mère, au bout du monde. Elle protège des preuves. Un détective payé par Lumen la traque à travers ce téléphone.${S.clues.D5 ? " Et bientôt, à travers celui de Jade." : ""}</div></div>
       <div class="cn-cat"><h3>Que fais-tu de ce que tu sais ?</h3></div>
       <button class="cn-btn sec dc" data-k="morel">📩 Envoyer « Ouessant » à Morel. Il a l'air de vouloir la protéger.</button>
       <button class="cn-btn sec dc" data-k="jade">💬 Écrire à Jade : « Elle est à Ouessant. Elle va bien. »</button>
