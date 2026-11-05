@@ -241,8 +241,18 @@ const Main = {
     const touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const vw = window.visualViewport ? visualViewport.width : innerWidth;
     let vh = window.visualViewport ? visualViewport.height : innerHeight;
-    const mob = vw <= 560 || (touch && vw < vh && vw <= 820);
-    const land = touch && vw > vh && vh < 520;
+    // Paysage = orientation réelle de l'appareil. La hauteur visible ne compte pas :
+    // le clavier virtuel la réduit et ferait croire à un téléphone couché.
+    const typingNow = document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+    if (typingNow) this._lastTyping = Date.now();
+    const justTyped = Date.now() - (this._lastTyping || 0) < 1500; // le clavier est encore en train de se fermer
+    const so = screen.orientation && screen.orientation.type;
+    const devLand = typeof window.orientation === 'number' ? Math.abs(window.orientation) === 90   // iPhone et Android : orientation physique
+      : so ? so.startsWith('landscape') : innerWidth > innerHeight;
+    const land = touch && devLand && !typingNow && !justTyped && Math.min(screen.width, screen.height) < 520;
+    if (justTyped && !typingNow) setTimeout(() => this.fit(), 1600);
+    // Mode téléphone : décidé sur la largeur et l'orientation, jamais sur la hauteur (clavier).
+    const mob = vw <= 560 || (touch && !devLand && vw <= 820) || (typingNow && document.body.classList.contains('mobile'));
     document.body.classList.toggle('mobile', mob);
     document.body.classList.toggle('landscape', land);
     const ph = $('#phone'), wrap = $('#phoneWrap');
