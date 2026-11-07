@@ -289,7 +289,7 @@ const OS = {
     const t = $('#cluetoast');
     t.innerHTML = `<span class="ct-ico">${ico}</span><div>${esc(title)}<small>${esc(sub)}</small></div>`;
     t.classList.add('show');
-    clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), 4200);
+    clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), Math.max(4200, 1800 + (title + sub).length * 60));
   },
 };
 

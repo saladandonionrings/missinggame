@@ -277,10 +277,11 @@ body.mobile #island{display:none}
 @keyframes bOut{to{transform:translateY(-130%);opacity:0}}
 
 /* clue toast */
-#cluetoast{position:absolute;bottom:44px;left:50%;transform:translate(-50%,30px);z-index:130;padding:10px 16px 10px 12px;border-radius:20px;background:rgba(250,240,215,.96);color:#3b2a12;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;opacity:0;transition:all .45s cubic-bezier(.2,1.3,.4,1);pointer-events:none;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.45);max-width:92%;overflow:hidden}
+#cluetoast{position:absolute;bottom:44px;left:50%;transform:translate(-50%,30px);z-index:130;padding:10px 16px 10px 12px;border-radius:20px;background:rgba(250,240,215,.96);color:#3b2a12;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;opacity:0;transition:all .45s cubic-bezier(.2,1.3,.4,1);pointer-events:none;white-space:normal;box-shadow:0 10px 30px rgba(0,0,0,.45);width:max-content;max-width:calc(100% - 28px);line-height:1.3}
+#cluetoast>div{min-width:0}
 #cluetoast.show{opacity:1;transform:translate(-50%,0)}
 #cluetoast .ct-ico{font-size:16px}
-#cluetoast small{font-weight:500;opacity:.75;display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+#cluetoast small{font-weight:500;opacity:.8;display:block;font-size:12px;margin-top:2px;white-space:normal;overflow-wrap:anywhere}
 
 /* ---------- call ---------- */
 #call{position:absolute;inset:0;z-index:110;display:none;flex-direction:column;align-items:center;padding-top:96px;
