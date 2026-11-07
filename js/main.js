@@ -34,13 +34,14 @@ const CHOICES = {
 
 /* ---------------- messageries dynamiques ---------------- */
 const VOICEMAILS = {
-  vm_maman2: { who: 'Maman', date: "aujourd'hui", steps: [{ who: 'maman', n: 'Maman', t: "C'est encore maman. Je sais que ce n'est pas toi qui as le téléphone, Jade m'a dit. Mais j'avais besoin d'entendre ta messagerie. Ta voix. Pardon." }] },
+  vm_maman2: { who: 'Maman', date: "aujourd'hui", steps: [{ clip: 'maman_appel_manque' }, { who: 'maman', n: 'Maman', t: "C'est encore maman. Je sais que ce n'est pas toi qui as le téléphone, Jade m'a dit. Mais j'avais besoin d'entendre ta messagerie. Ta voix. Pardon." }] },
   vm_morel: { who: '+33 6 39 98 71 44', date: "aujourd'hui", clue: 'M1', steps: [{ who: 'morel', n: 'Inspecteur Morel', t: "Bonjour. Inspecteur Franck Morel, police judiciaire. Je sais que vous avez le téléphone de Nora Valette. Elle est peut-être en danger. Rappelez-moi, ou écrivez-moi à ce numéro. Le moindre lieu. Personne d'autre." }] },
   vm_bastien: { who: 'NE PAS RÉPONDRE', date: "aujourd'hui",
     get clue() { return knows.morel() ? 'M4' : null; },
     get steps() { return [{ who: 'bastien', n: 'Bastien Leroy', t: knows.morel()
       ? "C'est Bastien Leroy. Je sais que ce n'est pas Nora qui a ce téléphone. Il contient des données qui appartiennent à Lumen. Remettez-le à monsieur Morel. Il saura vous trouver, de toute façon."
       : "C'est Bastien Leroy. Je sais que ce n'est pas Nora qui a ce téléphone. Il contient des données qui appartiennent à Lumen. Quelqu'un passera le chercher. Il saura vous trouver, de toute façon." }]; } },
+  vm_benali: { who: 'Mme Benali (3e G)', date: "aujourd'hui", clue: 'M12', steps: [{ who: 'maman', n: 'Mme Benali (chuchote)', t: "C'est Mme Benali. Il y avait un homme dans l'escalier, devant chez Nora. Il disait qu'il venait chercher son téléphone pour la police. Je ne lui ai pas ouvert. Il est reparti. Si vous êtes chez elle, n'ouvrez à personne." }] },
   vm_masked: { who: 'Numéro masqué', date: "aujourd'hui", clue: 'L11', steps: [{ sfx: 'sea' }, { wait: 1500 }, { fx: "(personne ne parle)" }, { gull: true }, { wait: 1500 }, { foghorn: true }, { wait: 2000 }, { breath: true }, { fx: "(fin du message)" }] },
 };
 function addMail(id) {
@@ -109,6 +110,7 @@ const CALLS = {
   },
   benali() {
     return { rings: 2, steps: [
+      { clip: 'benali_appel' },
       { who: 'maman', n: 'Mme Benali', t: "Allô ? Ah, c'est le portable de Nora ! Vous êtes sa sœur ? Non ? Une amie. Bon." },
       { who: 'maman', n: 'Mme Benali', t: "Le chat va très bien, il a déjà mangé un bout de mon rideau. Elle me l'a amené samedi, à l'aube, avec ses croquettes." },
       { who: 'maman', n: 'Mme Benali', t: "Elle m'a dit qu'elle partait voir la mer quelques jours. Elle avait un grand sac. Elle avait l'air… soulagée, je dirais." },
@@ -172,6 +174,8 @@ const TOPICS = {
       reply: ["Marseille. Bien. Merci."], then: () => { flag('baitMorel'); later(45000, () => { Sound.fx.glitch(); Msg.receive('morel', ["Joli essai.", "Son téléphone n'a jamais quitté Lyon. Et ses dernières recherches parlent de bateaux, pas de calanques.", "Ne me prenez plus pour un idiot."]); }); } },
   ],
   theo: [
+    { id: 't_thanks', when: () => has('wipeCancelled'), label: "Merci d'avoir bloqué l'effacement. Ça va aller, pour toi ?",
+      reply: ["Je sais pas.", "Mais pour la première fois depuis des mois, je dors pas trop mal."] },
     { id: 't_api', when: () => cl('P4'), label: "C'est toi qui as codé l'API Retrouver ?",
       reply: ["Oui.", "On m'a dit que c'était pour les familles. Pour retrouver des personnes âgées perdues, des ados en fugue.", "J'ai voulu y croire. Je témoignerai, si elle a besoin. Dis-le-lui."], then: () => flag('theoWitness') },
     { id: 't_jade', when: () => cl('D5') && !has('jadeDeletedLumen'), label: "Tu peux bloquer la requête 5103 sur Jade ?",
@@ -180,6 +184,8 @@ const TOPICS = {
       reply: ["Je t'ai transféré le mail, non ?", "Je l'ai vu au bureau, ce Morel. Costume gris, poignée de main molle. Il a demandé le plan de l'appart de Nora."] },
   ],
   maman: [
+    { id: 'ma_leak', when: () => cl('M11') && (cl('M2') || cl('M3') || cl('M4')), label: "Ne dites plus rien à cet homme. Ce n'est pas un policier.",
+      reply: ["Mon Dieu.", "Je lui ai tout dit. La Bretagne, la maison de ma mère…", "S'il rappelle, je raccroche. Je te le promets."] },
     { id: 'ma_ok', when: () => cl('L1') || cl('D2'), label: "Je crois qu'elle est partie d'elle-même, et qu'elle va bien.",
       reply: ["Merci.", "Merci, merci.", "Dis-lui que je ne lui en veux pas. Qu'elle revienne quand elle pourra. Je garde son assiette."] },
     { id: 'ma_house', when: () => cl('L4'), label: "Elle parlait souvent de la maison de sa grand-mère ?",
@@ -197,8 +203,8 @@ const Topics = {
     S.said = S.said || {}; S.said[id] = Date.now(); save();
     Sound.fx.sent();
     pushMsg(tid, { f: 'me', t: t.label });
-    Bus.emit('choices', tid);
     if (t.then) t.then();
+    Bus.emit('choices', tid);
     setTimeout(() => Msg.receive(tid, t.reply), 900);
   },
 };
@@ -273,6 +279,33 @@ const EVENTS = [
   { id: 'morelJadeGone', after: 'jadeDeletedLumen', delay: 35, cond: () => has('ev_morelCall'), run() { Sound.fx.glitch(); ensureThread('morel'); Msg.receive('morel', ["La sœur vient de supprimer son application.", "C'était votre idée ? Dommage. Elle était si facile à suivre."]); } },
   { id: 'theoAfterDel', ambient: true, after: 'jadeDeletedLumen', delay: 70, cond: () => has('ev_theoWarn'), run() { Msg.receive('theo', ["La 5103 vient de passer en échec. Jade a supprimé l'appli ?", "Bien joué. Vraiment."]); } },
   { id: 'jadeAfterMorel', after: 'toldJadeMorel', delay: 90, run() { Msg.receive('jade', ["J'ai fait une recherche sur « Franck Morel ».", "Un Franck Morel a un profil pro : « ancien gendarme, enquêtes privées, cabinet Argos Conseil ».", "Ancien. Gendarme. Ce mec n'est plus rien du tout."]); } },
+  // Lumen tente d'effacer le téléphone à distance après l'ouverture du coffre ; Théo l'en empêche.
+  { id: 'mdmWipe', after: 'vaultOpen', delay: 150, run() {
+    flag('wipeScheduled'); Sound.fx.glitch(); $('#screen').classList.add('glitch'); setTimeout(() => $('#screen').classList.remove('glitch'), 1100);
+    const t = new Date(Date.now() + 15 * 60000), hm = t.getHours() + ':' + String(t.getMinutes()).padStart(2, '0');
+    OS.notify({ app: 'settings', title: 'Gestion de l\'appareil — Lumen SAS', body: `Effacement à distance programmé à ${hm}. Motif : appareil professionnel non restitué. Toutes les données seront supprimées.`, sound: 'notif' });
+  } },
+  { id: 'theoSaves', after: 'wipeScheduled', delay: 50, run() {
+    Msg.receive('theo', ["Ils ont lancé un effacement à distance du téléphone de Nora. Le profil de gestion de la boîte, celui qu'on installe sur nos téléphones perso.", "Je viens de l'annuler depuis la console admin.", "Ils vont savoir que c'est moi. Tant pis.", "Garde tout. Et fais vite."]).then(() => { flag('wipeCancelled'); clue('D8'); OS.notify({ app: 'settings', title: 'Gestion de l\'appareil', body: "Effacement à distance annulé par un administrateur.", sound: null }); });
+  } },
+  { id: 'theoFired', after: 'wipeCancelled', delay: 240, run() { Msg.receive('theo', ["Voilà. Badge désactivé à 16 h, ordinateur confisqué, escorté jusqu'à l'ascenseur.", "Licencié pour faute grave.", "Je ne regrette rien. Dis-lui que je témoignerai."]).then(() => flag('theoWitness')); } },
+  // Maman s'est fait berner par le faux policier.
+  { id: 'mamanLeak', after: 'ev_morelCall', delay: 210, run() { Msg.receive('maman', ["Un policier très gentil m'a appelée tout à l'heure.", "Il voulait savoir si on avait une maison de famille. Je lui ai dit que oui, en Bretagne, celle de ma mère.", "Jade me crie dessus. J'ai mal fait ?"]).then(() => { flag('mamanLeaked'); clue('M11'); }); } },
+  { id: 'morelBzh', after: 'mamanLeaked', delay: 70, run() { ensureThread('morel'); Msg.receive('morel', ["Votre mère est une femme charmante.", "La Bretagne, c'est grand. Mais pas tant que ça."]); } },
+  // Morel vient chercher le téléphone ; la voisine prévient.
+  { id: 'benaliStairs', after: 'ev_morelThreat', delay: 70, call: true, run() {
+    Call.incoming({ name: 'Mme Benali (3e G)', ini: 'B', col: '#30d158', script: [
+      { fn: () => clue('M12') },
+      { who: 'maman', n: 'Mme Benali (chuchote)', t: "Allô ? C'est Mme Benali, la voisine. Je chuchote, excusez-moi." },
+      { who: 'maman', n: 'Mme Benali (chuchote)', t: "Il y a un homme dans l'escalier, devant la porte de Nora. Le même que l'autre jour. Il dit qu'il est de la police et qu'il vient chercher son téléphone." },
+      { choice: [{ label: "Ne lui ouvrez surtout pas.", steps: [{ who: 'maman', n: 'Mme Benali (chuchote)', t: "Je ne suis pas folle, je ne lui ai pas ouvert. Il a sonné chez moi aussi. Kafka a craché à travers la porte." }] },
+                 { label: "Il vous a montré une carte de police ?", steps: [{ who: 'maman', n: 'Mme Benali (chuchote)', t: "Il a agité un truc. Une carte de fidélité, si vous voulez mon avis." }] }] },
+      { wait: 1200 }, { fx: '(des pas dans l\'escalier, une porte claque en bas)' },
+      { who: 'maman', n: 'Mme Benali', t: "Il redescend. Il est parti. Si vous êtes chez elle, n'ouvrez à personne, hein." },
+    ], onMiss: () => setTimeout(() => addVoicemail('vm_benali'), 3500) });
+  } },
+  // L'appel masqué, c'était Nora : la journaliste le confirme.
+  { id: 'claireSms', after: 'ev_masked', delay: 45, cond: () => has('ombreRead'), run() { Msg.receive('inconnu', ["Ici C. Je vous écris d'un téléphone jetable.", "L'appel masqué de tout à l'heure, c'était elle. Elle a reconnu une respiration qui n'était pas celle de Jade.", "Elle va bien. Elle sait que quelqu'un a son téléphone. Elle vous remercie de ne pas avoir parlé.", "Si vous voulez l'aider : ne cherchez pas plus loin. Ou écrivez-moi sur Ombre, si vous savez l'ouvrir."], { notifyTitle: 'Numéro inconnu' }).then(() => clue('P15')); } },
   { id: 'battery', ambient: true, after: 'unlocked', delay: 480, run() { OS.notify({ app: 'settings', title: 'Batterie faible', body: `${S.battery} % de batterie restante. Le téléphone de Nora n'a pas été chargé depuis 4 jours.` }); } },
 ];
 function nudge() {
@@ -484,7 +517,8 @@ const Main = {
         last: "Nora est rentrée. Jade l'a serrée si fort qu'elle a eu mal. Puis elle a demandé : « Pourquoi personne ne m'a rien dit ? » Le silence protège. Il blesse aussi." },
     }[k];
     if (k === 'claire' && has('jadeDeletedLumen')) T_.txt[1] = "Puis tu appelles Jade. Pas un message : ta voix. « Tu as bien fait de supprimer Lumen. Ne me demande rien. Elle va bien. Elle sera là le 12. »";
-    if (k === 'claire' && has('theoWitness')) T_.paper.p.splice(1, 0, "Un ancien développeur de Lumen a accepté de témoigner : « On m'a dit que c'était pour les familles. J'ai voulu y croire. »");
+    if (k === 'claire' && has('theoWitness')) T_.paper.p.splice(1, 0, has('wipeCancelled') ? "Un ancien développeur de Lumen, licencié pour avoir empêché l'effacement à distance du téléphone de la lanceuse d'alerte, a accepté de témoigner : « On m'a dit que c'était pour les familles. J'ai voulu y croire. »" : "Un ancien développeur de Lumen a accepté de témoigner : « On m'a dit que c'était pour les familles. J'ai voulu y croire. »");
+    if (k === 'morel' && has('mamanLeaked')) T_.txt[3] = "Il savait déjà « la Bretagne », grâce à la mère de Nora. Il lui manquait un mot. Tu le lui as donné.";
     if (k === 'jade' && has('jadeDeletedLumen')) T_.txt[2] = "Elle avait supprimé Lumen, comme tu le lui avais dit. Mais ton message est parti de CE téléphone. Celui qu'Argos lit en direct, journal compris.";
     const d = i => `animation-delay:${fromResume ? 0 : i}s`;
     let t = 0.4;

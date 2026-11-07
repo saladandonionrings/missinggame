@@ -39,6 +39,40 @@ Sur mobile, le jeu passe en plein écran.
 - **Une aide progressive** : appelle Jade, ou demande un indice dans ton carnet.
 - **4 fins**.
 
+## Voix des personnages (enregistrements)
+
+Les appels et les messageries peuvent être doublés par de vrais enregistrements. Chaque fichier va dans `audio/`, et sa durée (en secondes) se déclare dans `STORY.clips` (`js/story.js`). Les sous-titres se calent automatiquement dessus. Une réplique sans enregistrement s'affiche simplement en sous-titres.
+
+Déjà enregistrés :
+
+| Fichier | Où on l'entend |
+|---|---|
+| `audio/benali_appel.mp3` | Quand on appelle Mme Benali (la voisine) |
+| `audio/theo_messagerie.mp3` | Messagerie : message de Théo (sam. 31 oct.) |
+| `audio/maman_messagerie.mp3` | Messagerie : message de Maman (dim. 1 nov.) |
+| `audio/maman_appel_manque.mp3` | Messagerie : Maman, si on ne décroche pas son appel |
+
+À enregistrer (nom de fichier conseillé → moment du jeu) :
+
+| Fichier | Moment |
+|---|---|
+| `jade_messagerie.mp3` | Messagerie : message de Jade (dim. 1 nov.) |
+| `jade_appel.mp3` | Quand on appelle Jade (aide contextuelle, texte variable) |
+| `maman_appel.mp3` | Maman appelle (appel entrant, avec un choix de réponse au milieu) |
+| `maman_appel_sortant.mp3` | Quand on appelle Maman |
+| `morel_appel.mp3` | L’« inspecteur » Morel appelle (appel entrant, avec un choix au milieu) |
+| `morel_messagerie.mp3` | Messagerie de Morel, si on ne décroche pas |
+| `argos_repondeur.mp3` | Quand on rappelle le numéro de Morel (répondeur d'Argos Conseil) |
+| `theo_appel.mp3` | Quand on appelle Théo après avoir ouvert le menu développeur |
+| `bastien_appel.mp3` | « NE PAS RÉPONDRE » (appel entrant ou sortant) |
+| `bastien_messagerie.mp3` | Messagerie de Bastien |
+| `benali_escalier.mp3` | Mme Benali appelle : un homme est dans l'escalier |
+| `claire_repondeur.mp3` | Répondeur de Claire Asselin |
+| `mamie_noel.mp3` | Mémo vocal « Mamie — Noël » |
+| `reunion.mp3` | Mémo vocal « Réunion 14-10 » |
+| `nora_pour_jade.mp3` | Mémo « Pour Jade » (dans le coffre) |
+| `nora_idee.mp3`, `nora_nuit.mp3`, `nora_lea.mp3` | Autres mémos vocaux de Nora |
+
 ## Le propos
 
 Le jeu ne parle pas seulement d'une disparition. Il parle de ce qu'un téléphone dit de nous, et de ceux qui l'écoutent. Applis « de sécurité » qui revendent nos trajets, courtiers en données, CGU de 34 pages, consentement en une case cochée… À la fin, le jeu te renvoie ton propre comportement : en une heure, toi aussi, tu as tout appris de Nora.

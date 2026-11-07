@@ -204,13 +204,22 @@ const Sound = (() => {
   function breath() { if (!ok()) return; const t = now(); noiseBurst(t, 1.2, { freq: 700, q: 0.7, vol: 0.05 }); noiseBurst(t + 1.6, 1.4, { freq: 500, q: 0.7, vol: 0.04 }); }
   function click() { if (!ok()) return; noiseBurst(now(), 0.03, { freq: 1500, vol: 0.25 }); }
 
+  /* ---- enregistrements des personnages (appels, messageries) ---- */
+  let clipEl = null;
+  function playClip(src) {
+    stopClip();
+    try { clipEl = new Audio(src); clipEl.muted = muted; clipEl.volume = 1; const p = clipEl.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { clipEl = null; }
+    return clipEl;
+  }
+  function stopClip() { if (clipEl) { try { clipEl.pause(); } catch (e) {} clipEl = null; } }
   function setMuted(m) {
+    if (clipEl) clipEl.muted = m;
     muted = m;
     if (master) master.gain.value = m ? 0 : 0.9;
     if (m) { try { speechSynthesis.cancel(); } catch (e) {} }
   }
 
-  return { init, fx, startRing, stopRing, startDial, stopDial, layer, stopLayers, foghorn, gull, breath, click, setMuted, get muted() { return muted; }, get ctx() { return ctx; } };
+  return { init, fx, playClip, stopClip, startRing, stopRing, startDial, stopDial, layer, stopLayers, foghorn, gull, breath, click, setMuted, get muted() { return muted; }, get ctx() { return ctx; } };
 })();
 
 /* ==========================================================

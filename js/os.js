@@ -256,7 +256,23 @@ const OS = {
   },
 
   /* ============ notifications ============ */
-  notify({ app, title, body, sound = 'notif', onTap = null }) {
+  notify(n) {
+    // En appel : rien ne s'affiche ni ne sonne. Tout arrive après avoir raccroché.
+    if (this.inCall) { this.pending = this.pending || []; this.pending.push(n); this.lastNotifAt = Date.now(); return; }
+    this.show(n);
+  },
+  flushPending() {
+    const q = this.pending || []; this.pending = [];
+    if (!q.length) return;
+    if (q.length > 3) {
+      // trop de choses d'un coup : un seul récapitulatif, puis la plus récente
+      setTimeout(() => this.show({ app: 'messages', title: 'Pendant ton appel', body: `${q.length} notifications : ` + [...new Set(q.map(x => x.title))].slice(0, 4).join(', '), sound: 'notif' }), 700);
+      setTimeout(() => this.show(Object.assign({}, q[q.length - 1], { sound: null })), 2200);
+      return;
+    }
+    q.forEach((n, i) => setTimeout(() => this.show(Object.assign({}, n, { sound: i ? null : n.sound })), 700 + i * 1500));
+  },
+  show({ app, title, body, sound = 'notif', onTap = null }) {
     this.lastNotifAt = Date.now();
     if (sound && Sound.fx[sound]) Sound.fx[sound]();
     if (this.locked) { this.lockNotif({ app, title, body }); return; }
@@ -343,7 +359,14 @@ function pushMsg(tid, m) {
 }
 const Msg = {
   openThread: null,
-  async receive(tid, lines, { gap = 1100, notifyTitle = null } = {}) {
+  _q: {},
+  receive(tid, lines, opts = {}) {
+    // Chaque conversation a sa file : une séquence attend que la précédente soit finie.
+    const run = () => this._receive(tid, lines, opts);
+    this._q[tid] = (this._q[tid] || Promise.resolve()).then(run, run);
+    return this._q[tid];
+  },
+  async _receive(tid, lines, { gap = 1100, notifyTitle = null } = {}) {
     ensureThread(tid);
     for (const raw of lines) {
       const m = typeof raw === 'string' ? { f: 'them', t: raw } : raw, line = m.t;
@@ -352,7 +375,7 @@ const Msg = {
       Bus.emit('typing', { tid, on: false });
       pushMsg(tid, { f: m.f, t: line });
       const open = Msg.openThread === tid && OS.app === 'messages';
-      if (open) Sound.fx.message();
+      if (open && !OS.inCall) Sound.fx.message();
       else if (raw === lines[0]) OS.notify({ app: 'messages', title: notifyTitle || STORY.threads[tid].name, body: line, sound: 'message', onTap: () => OS.open('messages', null, { thread: tid }) });
       await sleep(300);
     }
@@ -364,24 +387,35 @@ const Msg = {
     delete S.choices[tid]; save();
     Sound.fx.sent();
     pushMsg(tid, { f: 'me', t: opt.label });
+    if (opt.then) opt.then();
     Bus.emit('choices', tid);
-    if (opt.then) setTimeout(() => opt.then(), 600);
   },
 };
 
 /* ---------------- lecteur d'étapes (appels, mémos) ---------------- */
+// Durée d'une réplique quand un enregistrement est en cours : proportionnelle à sa longueur.
+function clipPlan(steps, from, clip) {
+  const lines = steps.slice(from).filter(s => s.t);
+  const chars = lines.reduce((a, s) => a + s.t.length, 0) || 1;
+  return { rate: Math.max(0, clip.dur * 1000 - lines.length * 250) / chars };
+}
 function stepsDuration(steps) {
-  let ms = 0;
+  let ms = 0, plan = null;
+  steps.forEach((s, i) => { if (s.clip && STORY.clips[s.clip]) plan = clipPlan(steps, i + 1, STORY.clips[s.clip]); });
   for (const s of steps) {
-    if (s.t) ms += Voice.estimate(s.t, (Voice.PROFILES[s.who] || Voice.PROFILES.robot).rate) + 250;
+    if (s.t && plan) ms += s.t.length * plan.rate + 250;
+    else if (s.t) ms += Voice.estimate(s.t, (Voice.PROFILES[s.who] || Voice.PROFILES.robot).rate) + 250;
     else if (s.wait) ms += s.wait; else if (s.fx) ms += 1300; else if (s.foghorn) ms += 1500; else if (s.gull) ms += 700; else if (s.breath) ms += 2600; else if (s.rec) ms += s.rec * 1000;
     else if (s.me) ms += Math.min(2600, 900 + s.me.length * 25);
   }
   return ms;
 }
 async function runSteps(steps, ui, token) {
-  for (const s of steps) {
-    if (token.cancel) return;
+  let plan = null;
+  for (let idx = 0; idx < steps.length; idx++) {
+    const s = steps[idx];
+    if (token.cancel) { Sound.stopClip(); return; }
+    if (s.clip) { const c = STORY.clips[s.clip]; if (c) { Sound.playClip(c.src); plan = clipPlan(steps, idx + 1, c); } continue; }
     if (s.rec) { for (let i = 0; i < s.rec * 10 && !token.cancel; i++) { if (i % 10 === 0) ui.rec && ui.rec(i / 10); await sleep(100); } ui.rec && ui.rec(false); continue; }
     if (s.sfx) { Sound.layer(s.sfx, true); continue; }
     if (s.stopsfx) { Sound.layer(s.stopsfx, false); continue; }
@@ -404,7 +438,8 @@ async function runSteps(steps, ui, token) {
     if (s.t) {
       ui.line(s.n || '', s.t, s.who);
       ui.speaking && ui.speaking(true);
-      await Voice.say(s.t, s.who, token);
+      if (plan) { const end = Date.now() + s.t.length * plan.rate; while (Date.now() < end && !token.cancel) await sleep(80); }
+      else await Voice.say(s.t, s.who, token);
       ui.speaking && ui.speaking(false);
       await sleep(250);
     }
@@ -430,7 +465,7 @@ const Call = {
         const chk = setInterval(() => { if (token.cancel) { clearInterval(chk); ch.innerHTML = ''; res(0); } }, 200);
       }),
       rec: v => { const st = $('.c-state', el); if (!st) return; if (v === false) { st.textContent = 'Message enregistré'; return; } st.innerHTML = '<span style="color:var(--red)">● Enregistrement · 0:0' + v + '</span>'; },
-      speaking: on => OS.island(on ? `<span>📞</span><div class="isl-wave green"><i></i><i></i><i></i><i></i></div>` : `<span>📞</span><span style="color:var(--green)">${Call.elapsed()}</span>`),
+      speaking: on => OS.inCall && OS.island(on ? `<span>📞</span><div class="isl-wave green"><i></i><i></i><i></i><i></i></div>` : `<span>📞</span><span style="color:var(--green)">${Call.elapsed()}</span>`),
     };
   },
   elapsed() { const s = Math.floor((Date.now() - this.t0) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); },
@@ -513,11 +548,12 @@ const Call = {
   },
   close() {
     clearInterval(this.timer);
-    Voice.stop(); Sound.stopRing(); Sound.stopDial();
+    Voice.stop(); Sound.stopRing(); Sound.stopDial(); Sound.stopClip();
     Sound.stopLayers(['drone']);
     const el = this.el(); el.className = ''; el.innerHTML = '';
     OS.inCall = false; OS.island(null); OS.badges();
     Bus.emit('callend');
+    OS.flushPending();
   },
 };
 
@@ -530,7 +566,7 @@ const Overlay = {
   close() {
     if (!OS.overlayOn) return;
     if (this.token) this.token.cancel = true;
-    Voice.stop(); Sound.stopLayers(['drone']);
+    Voice.stop(); Sound.stopClip(); Sound.stopLayers(['drone']);
     const o = $('#overlay'); o.classList.remove('on'); o.innerHTML = ''; OS.overlayOn = false; OS.island(null);
     Bus.emit('overlayclose');
   },

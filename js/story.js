@@ -701,3 +701,21 @@ Cet avertissement vaut également pour toute personne ayant accès à votre appa
 Le service juridique` },
 });
 STORY.threads.colix = { name: 'Colix', ini: '📦', col: '#ffd60a', sms: true, msgs: [] };
+
+/* ---------------- Enregistrements audio des personnages ----------------
+   Chaque fichier est joué pendant l'appel ou la messagerie correspondante ;
+   les sous-titres sont calés sur sa durée réelle (en secondes). */
+STORY.clips = {
+  benali_appel:       { src: 'audio/benali_appel.mp3',       dur: 27.95 },
+  theo_messagerie:    { src: 'audio/theo_messagerie.mp3',    dur: 18.91 },
+  maman_messagerie:   { src: 'audio/maman_messagerie.mp3',   dur: 14.68 },
+  maman_appel_manque: { src: 'audio/maman_appel_manque.mp3', dur: 20.04 },
+};
+
+/* ---------------- Rebondissements ---------------- */
+Object.assign(STORY.clues, {
+  D8:  { c: 'D', t: "Lumen a lancé un effacement à distance du téléphone. Théo l'a annulé, et l'a payé de son poste." },
+  M11: { c: 'M', t: "Maman a dit au faux policier que la famille a une maison en Bretagne." },
+  M12: { c: 'M', t: "Morel est venu jusqu'à la porte de Nora pour récupérer le téléphone." },
+  P15: { c: 'P', t: "La journaliste confirme : l'appel masqué, c'était Nora. Elle est en sécurité." },
+});

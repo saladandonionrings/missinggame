@@ -88,6 +88,7 @@ APPS.messages = {
     renderComp();
     live(v, 'choices', d => { if (d === tid) renderComp(); });
     live(v, 'clue', () => renderComp());
+    live(v, 'flag', () => renderComp());
     if (tid === 'theo') flag('readTheo');
     if (T.deleted) { comp.onclick = null; comp.innerHTML = '<div class="fake" style="justify-content:center;color:var(--red);border-color:#3a1a1a">Conversation supprimée par Nora le 30 oct.</div>'; flag('readBastienDel'); if (T.clue) setTimeout(() => clue(T.clue), 1200); }
   },
@@ -106,8 +107,8 @@ STORY.baseRecents = [
 ];
 STORY.baseVoicemails = [
   { id: 'vm_jade', who: 'Jade 💛', date: 'dim. 1 nov.', steps: [{ who: 'jade', n: 'Jade', t: "Nora, c'est moi. Je suis devant ta porte. Kafka n'est pas là, ton téléphone est sur la table. Ça veut dire quoi ? Rappelle-moi. S'il te plaît. Je flippe." }] },
-  { id: 'vm_maman', who: 'Maman', date: 'dim. 1 nov.', steps: [{ who: 'maman', n: 'Maman', t: "Ma chérie, c'est maman. Je suis allée sur la tombe de mamie ce matin. Toute seule. Tu m'as manqué. Rappelle-moi, même juste un message. Je t'aime." }] },
-  { id: 'vm_theo', who: 'Théo (Lumen)', date: 'sam. 31 oct.', steps: [{ sfx: 'line' }, { who: 'theo', n: 'Théo', t: "C'est Théo. Ne me rappelle pas sur ce numéro. Ni sur aucun autre. Je voulais juste te dire… t'avais raison. Sur tout. Fais attention à toi." }] },
+  { id: 'vm_maman', who: 'Maman', date: 'dim. 1 nov.', steps: [{ clip: 'maman_messagerie' }, { who: 'maman', n: 'Maman', t: "Ma chérie, c'est maman. Je suis allée sur la tombe de mamie ce matin. Toute seule. Tu m'as manqué. Rappelle-moi, même juste un message. Je t'aime." }] },
+  { id: 'vm_theo', who: 'Théo (Lumen)', date: 'sam. 31 oct.', steps: [{ sfx: 'line' }, { clip: 'theo_messagerie' }, { who: 'theo', n: 'Théo', t: "C'est Théo. Ne me rappelle pas sur ce numéro. Ni sur aucun autre. Je voulais juste te dire… t'avais raison. Sur tout. Fais attention à toi." }] },
 ];
 APPS.phone = {
   open(el, opts) {
