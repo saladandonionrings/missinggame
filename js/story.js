@@ -431,8 +431,8 @@ STORY.web = [
 
 /* ---------------- Mémos vocaux ---------------- */
 STORY.memos = [
-  { id: 'mamie', title: 'Mamie — Noël', date: '24 déc. 2023', dur: '0:41', cls: 'cold', clue: 'L10', steps: [
-    { sfx: 'wind' }, { wait: 900 },
+  { id: 'mamie', title: 'Mamie — Noël', date: '24 déc. 2023', dur: '0:23', cls: 'cold', clue: 'L10', steps: [
+    { sfx: 'wind' }, { wait: 900 }, { clip: 'mamie_noel' },
     { who: 'nora', n: 'Nora', t: "Mamie, redis ce que tu m'as dit tout à l'heure. Pour que je l'enregistre." },
     { who: 'mamie', n: 'Mamie', t: "Oh, tu m'embêtes avec ton téléphone…" },
     { who: 'mamie', n: 'Mamie', t: "Je disais que cette maison, c'est le bout du monde. Ton grand-père l'appelait comme ça. Le bout du monde." },
@@ -442,8 +442,8 @@ STORY.memos = [
     { who: 'nora', n: 'Nora', t: "Je t'aime, mamie." },
     { who: 'mamie', n: 'Mamie', t: "Et éteins-moi ce machin, on mange." },
   ]},
-  { id: 'reunion', title: 'Réunion 14-10 (ne pas effacer)', date: '14 oct. 2026', dur: '1:12', cls: 'red', clue: 'P7', steps: [
-    { sfx: 'office' }, { fx: '(enregistrement discret — voix étouffées)' }, { wait: 800 },
+  { id: 'reunion', title: 'Réunion 14-10 (ne pas effacer)', date: '14 oct. 2026', dur: '0:25', cls: 'red', clue: 'P7', steps: [
+    { sfx: 'office' }, { fx: '(enregistrement discret — voix étouffées)' }, { wait: 800 }, { clip: 'reunion' },
     { who: 'bastien', n: 'Bastien', t: "Les chiffres du trimestre sont excellents. Le segment particuliers explose." },
     { who: 'homme', n: 'Un associé', t: "Et le juridique ? Si ça sort ?" },
     { who: 'bastien', n: 'Bastien', t: "Ça ne sortira pas. Tout est dans les conditions d'utilisation. Elles ont cliqué sur accepter." },
@@ -452,8 +452,8 @@ STORY.memos = [
     { who: 'bastien', n: 'Bastien', t: "Elles se sentent en sécurité. C'est exactement ce qu'on leur vend. Le sentiment." },
     { fx: '(rires)' },
   ]},
-  { id: 'idee', title: 'Idée appli !!!', date: '2 févr. 2022', dur: '0:28', cls: '', steps: [
-    { sfx: 'crackle' }, { wait: 500 },
+  { id: 'idee', title: 'Idée appli !!!', date: '2 févr. 2022', dur: '0:20', cls: '', steps: [
+    { sfx: 'crackle' }, { wait: 500 }, { clip: 'nora_idee' },
     { who: 'nora', n: 'Nora', t: "Ok, idée à trois heures du matin. Une appli. Tu rentres seule, tu appuies sur un bouton, et tes proches te suivent jusqu'à ta porte." },
     { who: 'nora', n: 'Nora', t: "Et si tu ne bouges plus, ça alerte. Plus aucune femme ne rentrerait seule. Jamais." },
     { who: 'nora', n: 'Nora', t: "On l'appellerait… Lumen. Comme une petite lumière dans la rue." },
@@ -480,7 +480,7 @@ API Retrouver ; PARTICULIERS ; position temps réel ; « retrouver un proche »
   { id: 'req', kind: 'png', name: 'requete_4471.png', size: '312 Ko', photo: 'requete' },
 ];
 STORY.pourJade = [
-  { sfx: 'line' }, { wait: 600 },
+  { sfx: 'line' }, { wait: 600 }, { clip: 'nora_pour_jade' },
   { who: 'nora', n: 'Nora', t: "Jade. Si tu écoutes ça, c'est que tu as trouvé le coffre. Je savais que tu y arriverais." },
   { who: 'nora', n: 'Nora', t: "Je vais bien. Je suis partie de moi-même. Personne ne m'a fait de mal." },
   { who: 'nora', n: 'Nora', t: "L'appli que j'ai construite vend la vie des femmes qu'elle prétend protéger. Une femme a été agressée à cause de nous. À cause de moi." },
@@ -608,16 +608,16 @@ Vous ne savez pas comment nous le savons ? C'est notre métier.` },
 ];
 
 STORY.deletedMemos = [
-  { id: 'nuit', title: 'Nouvel enregistrement 14', date: '29 oct. 2026 · 22:16', dur: '0:38', cls: 'red', clue: 'M9', steps: [
-    { sfx: 'wind' }, { fx: '(la pluie contre une fenêtre)' }, { wait: 600 },
+  { id: 'nuit', title: 'Nouvel enregistrement 14', date: '29 oct. 2026 · 22:16', dur: '0:16', cls: 'red', clue: 'M9', steps: [
+    { sfx: 'wind' }, { fx: '(la pluie contre une fenêtre)' }, { wait: 600 }, { clip: 'nora_nuit' },
     { who: 'nora', n: 'Nora (chuchote)', t: "Il est encore là. Même voiture, même place, sous le lampadaire. Troisième soir." },
     { who: 'nora', n: 'Nora (chuchote)', t: "Il ne se cache même pas. Il veut que je le voie." },
     { breath: true },
     { who: 'nora', n: 'Nora (chuchote)', t: "Je dis ça pour que ce soit enregistré quelque part. Si quelque chose m'arrive, ce n'est pas un accident." },
     { fx: '(un moteur démarre dehors)' },
   ]},
-  { id: 'lea', title: 'Brouillon — pour Léa', date: '27 oct. 2026 · 00:58', dur: '0:24', cls: '', clue: 'P12', steps: [
-    { sfx: 'crackle' }, { wait: 500 },
+  { id: 'lea', title: 'Brouillon — pour Léa', date: '27 oct. 2026 · 00:58', dur: '0:12', cls: '', clue: 'P12', steps: [
+    { sfx: 'crackle' }, { wait: 500 }, { clip: 'nora_lea' },
     { who: 'nora', n: 'Nora', t: "Léa. Vous ne me connaissez pas. Je travaille pour l'application qui a permis à cet homme de vous retrouver." },
     { who: 'nora', n: 'Nora', t: "Je voulais vous dire que je suis…" },
     { wait: 1400 }, { fx: '(un long silence)' },
@@ -706,10 +706,52 @@ STORY.threads.colix = { name: 'Colix', ini: '📦', col: '#ffd60a', sms: true, m
    Chaque fichier est joué pendant l'appel ou la messagerie correspondante ;
    les sous-titres sont calés sur sa durée réelle (en secondes). */
 STORY.clips = {
-  benali_appel:       { src: 'audio/benali_appel.mp3',       dur: 27.95 },
-  theo_messagerie:    { src: 'audio/theo_messagerie.mp3',    dur: 18.91 },
-  maman_messagerie:   { src: 'audio/maman_messagerie.mp3',   dur: 14.68 },
-  maman_appel_manque: { src: 'audio/maman_appel_manque.mp3', dur: 20.04 },
+  argos_repondeur: { src: 'audio/argos_repondeur.mp3', dur: 8.44 },
+  bastien_appel_1: { src: 'audio/bastien_appel_1.mp3', dur: 6.69 },
+  bastien_appel_2a: { src: 'audio/bastien_appel_2a.mp3', dur: 7.39 },
+  bastien_appel_2b: { src: 'audio/bastien_appel_2b.mp3', dur: 8.20 },
+  bastien_messagerie_a: { src: 'audio/bastien_messagerie_a.mp3', dur: 9.95 },
+  bastien_messagerie_b: { src: 'audio/bastien_messagerie_b.mp3', dur: 10.11 },
+  bastien_repondeur: { src: 'audio/bastien_repondeur.mp3', dur: 2.43 },
+  benali_appel: { src: 'audio/benali_appel.mp3', dur: 27.95 },
+  benali_escalier_1: { src: 'audio/benali_escalier_1.mp3', dur: 13.09 },
+  benali_escalier_2a: { src: 'audio/benali_escalier_2a.mp3', dur: 6.92 },
+  benali_escalier_2b: { src: 'audio/benali_escalier_2b.mp3', dur: 4.13 },
+  benali_escalier_3: { src: 'audio/benali_escalier_3.mp3', dur: 4.91 },
+  benali_messagerie: { src: 'audio/benali_messagerie.mp3', dur: 11.89 },
+  claire_repondeur: { src: 'audio/claire_repondeur.mp3', dur: 7.31 },
+  ines_repondeur: { src: 'audio/ines_repondeur.mp3', dur: 4.52 },
+  jade_aide_1: { src: 'audio/jade_aide_1.mp3', dur: 13.09 },
+  jade_aide_2: { src: 'audio/jade_aide_2.mp3', dur: 5.80 },
+  jade_aide_3: { src: 'audio/jade_aide_3.mp3', dur: 9.17 },
+  jade_aide_4: { src: 'audio/jade_aide_4.mp3', dur: 6.92 },
+  jade_aide_5: { src: 'audio/jade_aide_5.mp3', dur: 8.05 },
+  jade_aide_6: { src: 'audio/jade_aide_6.mp3', dur: 6.11 },
+  jade_appel_debut: { src: 'audio/jade_appel_debut.mp3', dur: 3.87 },
+  jade_appel_fin: { src: 'audio/jade_appel_fin.mp3', dur: 3.79 },
+  jade_messagerie: { src: 'audio/jade_messagerie.mp3', dur: 10.19 },
+  maman_appel_1: { src: 'audio/maman_appel_1.mp3', dur: 2.35 },
+  maman_appel_2b: { src: 'audio/maman_appel_2b.mp3', dur: 4.83 },
+  maman_appel_3: { src: 'audio/maman_appel_3.mp3', dur: 16.77 },
+  maman_appel_manque: { src: 'audio/maman_appel_manque.mp3', dur: 9.25 },
+  maman_appel_sortant: { src: 'audio/maman_appel_sortant.mp3', dur: 15.96 },
+  maman_messagerie: { src: 'audio/maman_messagerie.mp3', dur: 10.45 },
+  mamie_noel: { src: 'audio/mamie_noel.mp3', dur: 23.41 },
+  morel_appel_1: { src: 'audio/morel_appel_1.mp3', dur: 15.80 },
+  morel_appel_2a: { src: 'audio/morel_appel_2a.mp3', dur: 3.32 },
+  morel_appel_2b: { src: 'audio/morel_appel_2b.mp3', dur: 4.13 },
+  morel_appel_3: { src: 'audio/morel_appel_3.mp3', dur: 10.45 },
+  morel_messagerie: { src: 'audio/morel_messagerie.mp3', dur: 13.24 },
+  nora_idee: { src: 'audio/nora_idee.mp3', dur: 20.19 },
+  nora_lea: { src: 'audio/nora_lea.mp3', dur: 11.89 },
+  nora_nuit: { src: 'audio/nora_nuit.mp3', dur: 15.80 },
+  nora_mamie_fixe: { src: 'audio/nora_mamie_fixe.mp3', dur: 0.99 },
+  nora_pour_jade: { src: 'audio/nora_pour_jade.mp3', dur: 31.95 },
+  paul_repondeur: { src: 'audio/paul_repondeur.mp3', dur: 3.24 },
+  reunion: { src: 'audio/reunion.mp3', dur: 25.23 },
+  theo_appel: { src: 'audio/theo_appel.mp3', dur: 20.69 },
+  theo_messagerie: { src: 'audio/theo_messagerie.mp3', dur: 12.12 },
+  theo_repondeur: { src: 'audio/theo_repondeur.mp3', dur: 1.80 },
 };
 
 /* ---------------- Rebondissements ---------------- */

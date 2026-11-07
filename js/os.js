@@ -393,21 +393,24 @@ const Msg = {
 };
 
 /* ---------------- lecteur d'étapes (appels, mémos) ---------------- */
-// Durée d'une réplique quand un enregistrement est en cours : proportionnelle à sa longueur.
+// Un enregistrement couvre les répliques qui le suivent, jusqu'au prochain enregistrement,
+// au prochain choix ou à { endclip }. Leur durée est proportionnelle à leur longueur.
 function clipPlan(steps, from, clip) {
-  const lines = steps.slice(from).filter(s => s.t);
+  const lines = [];
+  for (let i = from; i < steps.length; i++) { const s = steps[i]; if (s.clip || s.choice || s.endclip) break; if (s.t) lines.push(s); }
   const chars = lines.reduce((a, s) => a + s.t.length, 0) || 1;
-  return { rate: Math.max(0, clip.dur * 1000 - lines.length * 250) / chars };
+  return { rate: Math.max(0, clip.dur * 1000 - lines.length * 250) / chars, left: lines.length };
 }
 function stepsDuration(steps) {
   let ms = 0, plan = null;
-  steps.forEach((s, i) => { if (s.clip && STORY.clips[s.clip]) plan = clipPlan(steps, i + 1, STORY.clips[s.clip]); });
-  for (const s of steps) {
-    if (s.t && plan) ms += s.t.length * plan.rate + 250;
-    else if (s.t) ms += Voice.estimate(s.t, (Voice.PROFILES[s.who] || Voice.PROFILES.robot).rate) + 250;
-    else if (s.wait) ms += s.wait; else if (s.fx) ms += 1300; else if (s.foghorn) ms += 1500; else if (s.gull) ms += 700; else if (s.breath) ms += 2600; else if (s.rec) ms += s.rec * 1000;
+  steps.forEach((s, i) => {
+    if (s.clip && STORY.clips[s.clip]) { plan = clipPlan(steps, i + 1, STORY.clips[s.clip]); return; }
+    if (s.choice || s.endclip) { plan = null; return; }
+    if (s.t) { ms += plan ? s.t.length * plan.rate + 250 : Voice.estimate(s.t, (Voice.PROFILES[s.who] || Voice.PROFILES.robot).rate) + 250; if (plan && --plan.left <= 0) plan = null; return; }
+    if (plan) return; // pendant un enregistrement, bruitages et silences sont dans le fichier
+    if (s.wait) ms += s.wait; else if (s.fx) ms += 1300; else if (s.foghorn) ms += 1500; else if (s.gull) ms += 700; else if (s.breath) ms += 2600; else if (s.rec) ms += s.rec * 1000;
     else if (s.me) ms += Math.min(2600, 900 + s.me.length * 25);
-  }
+  });
   return ms;
 }
 async function runSteps(steps, ui, token) {
@@ -416,17 +419,20 @@ async function runSteps(steps, ui, token) {
     const s = steps[idx];
     if (token.cancel) { Sound.stopClip(); return; }
     if (s.clip) { const c = STORY.clips[s.clip]; if (c) { Sound.playClip(c.src); plan = clipPlan(steps, idx + 1, c); } continue; }
+    if (s.endclip) { plan = null; continue; }
+    const quiet = !!plan; // pendant un enregistrement : les bruitages jouent mais n'ajoutent pas d'attente
     if (s.rec) { for (let i = 0; i < s.rec * 10 && !token.cancel; i++) { if (i % 10 === 0) ui.rec && ui.rec(i / 10); await sleep(100); } ui.rec && ui.rec(false); continue; }
     if (s.sfx) { Sound.layer(s.sfx, true); continue; }
     if (s.stopsfx) { Sound.layer(s.stopsfx, false); continue; }
-    if (s.foghorn) { Sound.foghorn(); ui.fx && ui.fx('(une corne de brume, au loin)'); await sleep(1500); continue; }
-    if (s.gull) { Sound.gull(); ui.fx && ui.fx('(des mouettes)'); await sleep(700); continue; }
-    if (s.breath) { Sound.breath(); ui.fx && ui.fx('(une respiration)'); await sleep(2600); continue; }
-    if (s.wait) { await sleep(s.wait); continue; }
-    if (s.fx) { ui.fx && ui.fx(s.fx); await sleep(1300); continue; }
+    if (s.foghorn) { Sound.foghorn(); ui.fx && ui.fx('(une corne de brume, au loin)'); if (!quiet) await sleep(1500); continue; }
+    if (s.gull) { Sound.gull(); ui.fx && ui.fx('(des mouettes)'); if (!quiet) await sleep(700); continue; }
+    if (s.breath) { Sound.breath(); ui.fx && ui.fx('(une respiration)'); if (!quiet) await sleep(2600); continue; }
+    if (s.wait) { if (!quiet) await sleep(s.wait); continue; }
+    if (s.fx) { ui.fx && ui.fx(s.fx); if (!quiet) await sleep(1300); continue; }
     if (s.fn) { s.fn(); continue; }
     if (s.me) { ui.me && ui.me(s.me); await sleep(Math.min(2600, 900 + s.me.length * 25)); continue; }
     if (s.choice) {
+      plan = null;
       const idx = await ui.choice(s.choice.map(c => c.label), token);
       if (token.cancel) return;
       const c = s.choice[idx];
@@ -438,7 +444,7 @@ async function runSteps(steps, ui, token) {
     if (s.t) {
       ui.line(s.n || '', s.t, s.who);
       ui.speaking && ui.speaking(true);
-      if (plan) { const end = Date.now() + s.t.length * plan.rate; while (Date.now() < end && !token.cancel) await sleep(80); }
+      if (plan) { const end = Date.now() + s.t.length * plan.rate; while (Date.now() < end && !token.cancel) await sleep(80); if (--plan.left <= 0) plan = null; }
       else await Voice.say(s.t, s.who, token);
       ui.speaking && ui.speaking(false);
       await sleep(250);

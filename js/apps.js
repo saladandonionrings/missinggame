@@ -106,7 +106,7 @@ STORY.baseRecents = [
   { name: 'Jade 💛', type: 'in', when: 'mar.', sub: 'mar. 27 oct. · 24 min' },
 ];
 STORY.baseVoicemails = [
-  { id: 'vm_jade', who: 'Jade 💛', date: 'dim. 1 nov.', steps: [{ who: 'jade', n: 'Jade', t: "Nora, c'est moi. Je suis devant ta porte. Kafka n'est pas là, ton téléphone est sur la table. Ça veut dire quoi ? Rappelle-moi. S'il te plaît. Je flippe." }] },
+  { id: 'vm_jade', who: 'Jade 💛', date: 'dim. 1 nov.', steps: [{ clip: 'jade_messagerie' }, { who: 'jade', n: 'Jade', t: "Nora, c'est moi. Je suis devant ta porte. Kafka n'est pas là, ton téléphone est sur la table. Ça veut dire quoi ? Rappelle-moi. S'il te plaît. Je flippe." }] },
   { id: 'vm_maman', who: 'Maman', date: 'dim. 1 nov.', steps: [{ clip: 'maman_messagerie' }, { who: 'maman', n: 'Maman', t: "Ma chérie, c'est maman. Je suis allée sur la tombe de mamie ce matin. Toute seule. Tu m'as manqué. Rappelle-moi, même juste un message. Je t'aime." }] },
   { id: 'vm_theo', who: 'Théo (Lumen)', date: 'sam. 31 oct.', steps: [{ sfx: 'line' }, { clip: 'theo_messagerie' }, { who: 'theo', n: 'Théo', t: "C'est Théo. Ne me rappelle pas sur ce numéro. Ni sur aucun autre. Je voulais juste te dire… t'avais raison. Sur tout. Fais attention à toi." }] },
 ];
@@ -1074,6 +1074,8 @@ const Hints = {
     S.hintLv[key] = Math.min(lv + 1, st[1].length - 1); save();
     return st[1][Math.min(lv, st[1].length - 1)];
   },
+  // numéro de l'enregistrement d'aide de Jade (jade_aide_1 … jade_aide_6), dans le même ordre que jadeLine
+  jadeIndex() { return !has('mailOpen') ? 1 : !has('lumenDev') ? 2 : !has('noteOpen') ? 3 : !has('vaultOpen') ? 4 : !has('ombreOpen') ? 5 : 6; },
   jadeLine() {
     if (!has('mailOpen')) return "Ses mails, c'est là qu'il y a tout son boulot. Pour le mot de passe, il y a une question secrète, non ? Notre tout premier animal… un chaton tout gris, minuscule. Regarde ses vieilles photos.";
     if (!has('lumenDev')) return "Théo, son collègue, lui parlait d'un menu caché dans l'appli Lumen. Relis leurs messages.";
