@@ -721,6 +721,7 @@ STORY.clips = {
   benali_messagerie: { src: 'audio/benali_messagerie.mp3', dur: 11.89 },
   claire_repondeur: { src: 'audio/claire_repondeur.mp3', dur: 7.31 },
   ines_repondeur: { src: 'audio/ines_repondeur.mp3', dur: 4.52 },
+  debut: { src: 'audio/debut.mp3', dur: 21.71 },
   jade_aide_1: { src: 'audio/jade_aide_1.mp3', dur: 13.09 },
   jade_aide_2: { src: 'audio/jade_aide_2.mp3', dur: 5.80 },
   jade_aide_3: { src: 'audio/jade_aide_3.mp3', dur: 9.17 },

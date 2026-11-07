@@ -428,9 +428,12 @@ const Main = {
       "Sa sœur Jade a retrouvé son téléphone, posé sur la table de la cuisine.",
       "Elle te l'a confié. Tu es « doué·e avec les téléphones ».",
     ];
-    I.innerHTML = `<div class="in-lines">${lines.map((l, i) => `<p style="animation-delay:${i * 2.1}s">${esc(l)}</p>`).join('')}<p class="big" style="animation-delay:${lines.length * 2.1 + 0.4}s">Trouve Nora.</p></div>
-      <button class="in-btn go" style="animation-delay:${lines.length * 2.1 + 1.6}s">Allumer le téléphone</button><button class="in-btn ghost skip" style="position:fixed;bottom:24px;right:24px;animation-delay:.5s;padding:8px 16px;font-size:12px;margin:0">Passer ›</button>`;
-    const go = () => { I.className = ''; I.innerHTML = ''; this.boot(); };
+    // Narration enregistrée (audio/debut.mp3) : chaque phrase apparaît quand la voix la prononce.
+    const starts = [0, 3.7, 7.7, 12.4, 16.8], findStart = 20.6, end = STORY.clips.debut.dur;
+    Sound.playClip(STORY.clips.debut.src);
+    I.innerHTML = `<div class="in-lines">${lines.map((l, i) => `<p style="animation-delay:${starts[i]}s;animation-duration:.9s">${esc(l)}</p>`).join('')}<p class="big" style="animation-delay:${findStart}s;animation-duration:.9s">Trouve Nora.</p></div>
+      <button class="in-btn go" style="animation-delay:${end + 0.3}s">Allumer le téléphone</button><button class="in-btn ghost skip" style="position:fixed;bottom:24px;right:24px;animation-delay:.5s;padding:8px 16px;font-size:12px;margin:0">Passer ›</button>`;
+    const go = () => { Sound.stopClip(); I.className = ''; I.innerHTML = ''; this.boot(); };
     $('.go', I).onclick = go; $('.skip', I).onclick = go;
   },
   async boot() {
