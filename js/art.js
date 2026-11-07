@@ -395,46 +395,78 @@ const ART = (() => {
     selfie() {
       const g = uid(), R = seeded(13);
       let sand = ''; for (let i = 0; i < 80; i++) sand += `<circle cx="${R() * 400}" cy="${290 + R() * 110}" r="${R() * 1.4}" fill="#b89a6a" opacity=".6"/>`;
-      let hairJ = ''; for (let i = 0; i < 26; i++) { const a = Math.PI * 1.05 + (i / 25) * Math.PI * .9; hairJ += `<path d="M${272 + Math.cos(a) * 52} ${276 + Math.sin(a) * 52} q${R() * 10 - 5} -6 ${R() * 8 - 4} -14" stroke="#e08a3a" stroke-width="2" fill="none" opacity=".7"/>`; }
-      let freck = ''; for (let i = 0; i < 18; i++) freck += `<circle cx="${252 + R() * 40}" cy="${282 + R() * 14}" r="1.1" fill="#b8643a" opacity=".6"/>`;
+      // mèches : quelques courbes fines, toujours à l'intérieur de la chevelure (clipPath)
+      let strandsN = ''; for (let i = 0; i < 14; i++) { const x = 80 + i * 9; strandsN += `<path d="M140 212 Q${140 + (x - 140) * .7} ${232 + R() * 6} ${x} ${300 + R() * 70}" stroke="#4a2e1a" stroke-width="1.2" fill="none" opacity=".5"/>`; }
+      let strandsJ = ''; for (let i = 0; i < 10; i++) { const x = 228 + i * 9.5; strandsJ += `<path d="M272 226 Q${272 + (x - 272) * .5} 236 ${x} 262" stroke="#a8501a" stroke-width="1.1" fill="none" opacity=".55"/>`; }
+      let freck = ''; for (let i = 0; i < 20; i++) freck += `<circle cx="${(250 + R() * 44).toFixed(1)}" cy="${(296 + R() * 14).toFixed(1)}" r="1.1" fill="#b8643a" opacity=".55"/>`;
+      let waffle = ''; for (let i = -3; i < 6; i++) waffle += `<path d="M${330 + i * 8} 312 l26 44 M${366 - i * 8} 312 l-26 44" stroke="#a87038" stroke-width="1.1"/>`;
       return svg(400, 400, `<defs>${defs(g)}
         <linearGradient id="${g}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4aa8f0"/><stop offset="1" stop-color="#c8ecff"/></linearGradient>
         <linearGradient id="${g}sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a7ab0"/><stop offset="1" stop-color="#5ad0d0"/></linearGradient>
         <radialGradient id="${g}skinN" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#f6cfa8"/><stop offset="1" stop-color="#c88a5e"/></radialGradient>
-        <radialGradient id="${g}skinJ" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#ffe2cc"/><stop offset="1" stop-color="#e8aa88"/></radialGradient>
+        <radialGradient id="${g}skinJ" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#ffe4d0"/><stop offset="1" stop-color="#eaac8a"/></radialGradient>
+        <linearGradient id="${g}hairN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a3820"/><stop offset="1" stop-color="#2a170a"/></linearGradient>
+        <linearGradient id="${g}hairJ" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f09a48"/><stop offset="1" stop-color="#c0581c"/></linearGradient>
         <radialGradient id="${g}flare" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="#fffbe0" stop-opacity=".8"/><stop offset="1" stop-color="#fff0a0" stop-opacity="0"/></radialGradient>
-        <linearGradient id="${g}lens" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a3a5a"/><stop offset=".5" stop-color="#6ab0e0"/><stop offset="1" stop-color="#1a2030"/></linearGradient></defs>
-        <rect width="400" height="200" fill="url(#${g}sky)"/>
-        ${[[80, 60, 70], [300, 90, 90]].map(([x, y, w]) => `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="16" fill="#fff" opacity=".7" filter="url(#${g}b8)"/>`).join('')}
-        <rect y="196" width="400" height="74" fill="url(#${g}sea)"/>${Array.from({ length: 16 }, () => `<path d="M${R() * 400} ${204 + R() * 60} q10 -3 20 0" stroke="#fff" stroke-width="1.4" fill="none" opacity=".55"/>`).join('')}
-        <path d="M0 196 L40 186 L70 192 L100 196Z" fill="#5a6a5a"/><path d="M0 262 Q200 252 400 266 L400 290 L0 290Z" fill="#fff" opacity=".6"/>
-        <rect y="280" width="400" height="120" fill="#f0d6a0"/>${sand}
+        <linearGradient id="${g}lens" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a2030"/><stop offset=".5" stop-color="#5a90c0"/><stop offset="1" stop-color="#10141c"/></linearGradient>
+        <radialGradient id="${g}straw" cx="40%" cy="35%" r="65%"><stop offset="0" stop-color="#ffd0e0"/><stop offset="1" stop-color="#f07aa0"/></radialGradient>
+        <radialGradient id="${g}van" cx="40%" cy="35%" r="65%"><stop offset="0" stop-color="#fffbea"/><stop offset="1" stop-color="#f0dca8"/></radialGradient>
+        <clipPath id="${g}cN"><path d="M80 300 C70 214 104 200 140 200 C176 200 210 214 200 300 L210 392 L70 392Z"/></clipPath>
+        <clipPath id="${g}cJ"><path d="M220 286 C214 232 240 220 272 220 C304 220 330 232 324 286 C318 262 300 246 272 246 C244 246 226 262 220 286Z"/></clipPath>
+        <clipPath id="${g}cone"><path d="M330 312 L366 312 L348 362Z"/></clipPath></defs>
+        <g filter="url(#${g}b1)">
+          <rect width="400" height="200" fill="url(#${g}sky)"/>
+          ${[[80, 60, 70], [300, 90, 90]].map(([x, y, w]) => `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="16" fill="#fff" opacity=".7" filter="url(#${g}b8)"/>`).join('')}
+          <rect y="196" width="400" height="74" fill="url(#${g}sea)"/>${Array.from({ length: 16 }, () => `<path d="M${R() * 400} ${204 + R() * 60} q10 -3 20 0" stroke="#fff" stroke-width="1.4" fill="none" opacity=".55"/>`).join('')}
+          <path d="M0 196 L40 186 L70 192 L100 196Z" fill="#5a6a5a"/><path d="M0 262 Q200 252 400 266 L400 290 L0 290Z" fill="#fff" opacity=".6"/>
+          <rect y="280" width="400" height="120" fill="#f0d6a0"/>${sand}
+        </g>
         <circle cx="352" cy="56" r="80" fill="url(#${g}flare)"/>${[[300, 110, 10, .25], [250, 170, 18, .15], [190, 240, 8, .3]].map(([x, y, r, o]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffe0a0" opacity="${o}"/>`).join('')}
-        <g filter="url(#${g}b1)"><g transform="translate(140 290)"><path d="M-96 140 C-96 60 96 60 96 140Z" fill="#2a6a8a"/><path d="M-24 50 L0 80 L24 50" fill="#f6cfa8"/>
-          <rect x="-16" y="30" width="32" height="30" fill="url(#${g}skinN)"/>
-          <path d="M-70 -10 C-82 50 -64 90 -50 100 L-40 20Z M70 -10 C82 50 66 92 52 100 L40 20Z" fill="#2a1808"/>
-          <ellipse cx="0" cy="-6" rx="60" ry="66" fill="url(#${g}skinN)"/>
-          <path d="M-62 -10 C-70 -90 70 -90 62 -10 C56 -48 30 -66 -4 -64 C-34 -64 -56 -46 -62 -10Z" fill="#2a1808"/>
-          <path d="M-62 -10 C-50 -60 -10 -70 20 -60 C-10 -54 -40 -40 -62 -10Z" fill="#4a2c14" opacity=".8"/>
-          <rect x="-54" y="-26" width="46" height="28" rx="12" fill="url(#${g}lens)"/><rect x="8" y="-26" width="46" height="28" rx="12" fill="url(#${g}lens)"/><path d="M-8 -14 h16" stroke="#111" stroke-width="4"/>
-          <path d="M-50 -22 l14 18 M12 -22 l14 18" stroke="#fff" stroke-width="3" opacity=".45"/><path d="M-54 -16 h-10 M54 -16 h10" stroke="#111" stroke-width="3"/>
-          <path d="M-26 28 Q0 50 26 28 Q0 40 -26 28Z" fill="#b8403a"/><path d="M-18 30 Q0 38 18 30" stroke="#fff" stroke-width="4" fill="none"/>
-          <ellipse cx="-38" cy="16" rx="11" ry="7" fill="#ff8a7a" opacity=".35"/><ellipse cx="38" cy="16" rx="11" ry="7" fill="#ff8a7a" opacity=".35"/>
-          <path d="M-3 6 q3 6 6 0" stroke="#a86a44" stroke-width="2" fill="none"/></g>
-        <g transform="translate(272 296)"><path d="M-84 130 C-84 56 84 56 84 130Z" fill="#e8506a"/><path d="M-40 70 h80" stroke="#fff" stroke-width="6" opacity=".6"/>
-          <rect x="-14" y="30" width="28" height="30" fill="url(#${g}skinJ)"/>
-          <ellipse cx="0" cy="-8" rx="54" ry="58" fill="url(#${g}skinJ)"/>
-          <path d="M-56 -14 C-50 -70 50 -72 56 -14 C42 -44 -40 -46 -56 -14Z" fill="#d8782a"/>${hairJ}
-          <circle cx="4" cy="-74" r="24" fill="#d8782a"/><circle cx="-4" cy="-80" r="9" fill="#f0a050" opacity=".6"/>
-          <path d="M-56 -14 C-62 10 -58 26 -50 36 L-46 -2Z" fill="#d8782a"/>
-          <ellipse cx="-20" cy="-10" rx="6.5" ry="7.5" fill="#fff"/><ellipse cx="20" cy="-10" rx="6.5" ry="7.5" fill="#fff"/><circle cx="-19" cy="-9" r="4.5" fill="#3a6a3a"/><circle cx="21" cy="-9" r="4.5" fill="#3a6a3a"/><circle cx="-19" cy="-9" r="2" fill="#111"/><circle cx="21" cy="-9" r="2" fill="#111"/><circle cx="-17.5" cy="-11" r="1.4" fill="#fff"/><circle cx="22.5" cy="-11" r="1.4" fill="#fff"/>
-          <path d="M-30 -22 q10 -6 20 -1 M10 -23 q10 -5 20 1" stroke="#a0501a" stroke-width="2.5" fill="none"/>
-          ${freck.replace(/cx="(\d+(\.\d+)?)"/g, (m, v) => `cx="${(+v - 272).toFixed(1)}"`).replace(/cy="(\d+(\.\d+)?)"/g, (m, v) => `cy="${(+v - 296).toFixed(1)}"`)}
-          <path d="M-22 18 Q0 40 22 18 Q0 30 -22 18Z" fill="#fff" stroke="#c0403a" stroke-width="3"/>
-          <ellipse cx="-34" cy="10" rx="10" ry="6" fill="#ff8a8a" opacity=".4"/><ellipse cx="34" cy="10" rx="10" ry="6" fill="#ff8a8a" opacity=".4"/></g></g>
-        <g transform="translate(366 318) rotate(18)"><path d="M-15 0 L0 56 L15 0Z" fill="#d8a060"/>${[0, 1, 2, 3].map(i => `<path d="M-12 ${6 + i * 11} L12 ${12 + i * 11} M12 ${6 + i * 11} L-12 ${12 + i * 11}" stroke="#a87038" stroke-width="1"/>`).join('')}
-          <circle cy="-6" r="17" fill="#ffb0c8"/><circle cx="-5" cy="-24" r="14" fill="#fff4d0"/><path d="M-14 4 q4 10 8 0 q4 10 8 0" fill="#ffb0c8"/></g>
-        ${finish(g, 400, 400, { grain: .25, vig: .35 })}`);
+
+        <!-- Nora : longs cheveux bruns, raie au milieu, lunettes relevées sur la tête -->
+        <path d="M80 300 C70 214 104 200 140 200 C176 200 210 214 200 300 L210 392 L70 392Z" fill="url(#${g}hairN)"/>
+        <g clip-path="url(#${g}cN)">${strandsN}</g>
+        <path d="M48 400 C50 352 84 334 140 334 C196 334 230 352 232 400Z" fill="#2a6a8a"/><path d="M118 336 Q140 352 162 336" stroke="#1e5470" stroke-width="3" fill="none"/>
+        <path d="M124 318 L124 340 Q140 348 156 340 L156 318Z" fill="url(#${g}skinN)"/>
+        <ellipse cx="140" cy="276" rx="52" ry="58" fill="url(#${g}skinN)"/>
+        <ellipse cx="88" cy="282" rx="7" ry="11" fill="#e0a07a"/><ellipse cx="192" cy="282" rx="7" ry="11" fill="#e0a07a"/>
+        <path d="M86 268 C84 222 108 208 140 208 C172 208 196 222 194 268 C188 244 170 232 146 230 L140 240 L134 230 C110 232 92 244 86 268Z" fill="url(#${g}hairN)"/>
+        <path d="M100 236 Q118 224 134 230 M180 236 Q162 224 146 230" stroke="#7a5230" stroke-width="2.5" fill="none" opacity=".6" stroke-linecap="round"/>
+        <g transform="translate(140 214)"><rect x="-46" y="-9" width="38" height="18" rx="8" fill="url(#${g}lens)"/><rect x="8" y="-9" width="38" height="18" rx="8" fill="url(#${g}lens)"/><path d="M-8 -2 h16" stroke="#111" stroke-width="3"/><path d="M-40 -5 l12 10 M14 -5 l12 10" stroke="#fff" stroke-width="2.5" opacity=".45"/></g>
+        <path d="M110 262 q10 -6 20 -1 M150 261 q10 -5 20 1" stroke="#3a2210" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <ellipse cx="120" cy="276" rx="6" ry="7" fill="#fff"/><ellipse cx="160" cy="276" rx="6" ry="7" fill="#fff"/>
+        <circle cx="121" cy="277" r="4.4" fill="#5a3a1a"/><circle cx="161" cy="277" r="4.4" fill="#5a3a1a"/><circle cx="121" cy="277" r="2" fill="#111"/><circle cx="161" cy="277" r="2" fill="#111"/><circle cx="122.5" cy="275" r="1.3" fill="#fff"/><circle cx="162.5" cy="275" r="1.3" fill="#fff"/>
+        <path d="M137 284 q3 8 6 0" stroke="#a86a44" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M118 300 Q140 320 162 300 Q140 310 118 300Z" fill="#b8403a"/><path d="M124 302 Q140 310 156 302" stroke="#fff" stroke-width="4" fill="none"/>
+        <ellipse cx="104" cy="294" rx="10" ry="6" fill="#ff8a7a" opacity=".35"/><ellipse cx="176" cy="294" rx="10" ry="6" fill="#ff8a7a" opacity=".35"/>
+
+        <!-- Jade : rousse, chignon haut bien attaché, mèches libres, taches de rousseur -->
+        <path d="M188 400 C190 356 224 340 272 340 C320 340 354 356 356 400Z" fill="#e8506a"/><path d="M232 362 h80" stroke="#fff" stroke-width="5" opacity=".55"/>
+        <path d="M258 322 L258 344 Q272 352 286 344 L286 322Z" fill="url(#${g}skinJ)"/>
+        <ellipse cx="272" cy="290" rx="50" ry="54" fill="url(#${g}skinJ)"/>
+        <ellipse cx="224" cy="294" rx="6" ry="10" fill="#eea888"/><ellipse cx="320" cy="294" rx="6" ry="10" fill="#eea888"/>
+        <circle cx="272" cy="214" r="24" fill="url(#${g}hairJ)"/><path d="M256 204 q16 -12 32 0 M254 216 q18 -8 36 2" stroke="#a8501a" stroke-width="1.4" fill="none" opacity=".6"/><circle cx="264" cy="206" r="7" fill="#ffb870" opacity=".5"/>
+        <path d="M220 286 C214 232 240 220 272 220 C304 220 330 232 324 286 C318 262 300 246 272 246 C244 246 226 262 220 286Z" fill="url(#${g}hairJ)"/>
+        <g clip-path="url(#${g}cJ)">${strandsJ}</g>
+        <rect x="261" y="232" width="22" height="6" rx="3" fill="#3a8a8a" transform="translate(0 -9)"/>
+        <path d="M226 270 q-8 22 -2 40 M318 270 q8 22 2 40" stroke="#d8702a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M244 272 q10 -6 20 -1 M282 271 q10 -5 20 1" stroke="#b8601a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="253" cy="285" rx="6.5" ry="7.5" fill="#fff"/><ellipse cx="291" cy="285" rx="6.5" ry="7.5" fill="#fff"/>
+        <circle cx="254" cy="286" r="4.4" fill="#3a7a4a"/><circle cx="292" cy="286" r="4.4" fill="#3a7a4a"/><circle cx="254" cy="286" r="2" fill="#111"/><circle cx="292" cy="286" r="2" fill="#111"/><circle cx="255.5" cy="284" r="1.3" fill="#fff"/><circle cx="293.5" cy="284" r="1.3" fill="#fff"/>
+        ${freck}
+        <path d="M269 292 q3 7 6 0" stroke="#c07a5a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M252 308 Q272 326 292 308 Q272 318 252 308Z" fill="#fff" stroke="#c0403a" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse cx="238" cy="302" rx="10" ry="6" fill="#ff8a8a" opacity=".4"/><ellipse cx="306" cy="302" rx="10" ry="6" fill="#ff8a8a" opacity=".4"/>
+
+        <!-- la glace, tenue par Jade : cornet gaufré, fraise + vanille -->
+        <path d="M356 400 C352 380 350 368 350 358" stroke="#eaac8a" stroke-width="20" fill="none" stroke-linecap="round"/>
+        <path d="M330 312 L366 312 L348 362Z" fill="#dca060"/><g clip-path="url(#${g}cone)">${waffle}</g>
+        <circle cx="348" cy="300" r="20" fill="url(#${g}straw)"/>
+        <path d="M330 306 q4 12 8 2 q3 10 7 1 q4 9 8 0 q4 11 8 -2 q3 6 6 0" fill="url(#${g}straw)"/>
+        <circle cx="346" cy="276" r="16" fill="url(#${g}van)"/><path d="M332 282 q3 8 7 1 q4 7 8 0 q3 6 7 -1" fill="url(#${g}van)"/>
+        <circle cx="340" cy="270" r="4" fill="#fff" opacity=".8"/><circle cx="341" cy="294" r="4" fill="#fff" opacity=".6"/>
+        <path d="M336 340 q-2 -14 10 -16 q12 0 16 8" fill="#eaac8a"/><path d="M338 330 q8 -4 16 0 M337 338 q9 -4 18 0" stroke="#c88a6a" stroke-width="1.5" fill="none"/>
+        ${finish(g, 400, 400, { grain: .22, vig: .35 })}`);
     },
 
     /* Coucher de soleil sur les toits de la Croix-Rousse, Fourvière au loin */
